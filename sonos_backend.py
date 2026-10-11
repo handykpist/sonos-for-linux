@@ -335,13 +335,20 @@ class SonosSpeaker:
 class SonosManager:
     def __init__(self):
         self.speakers: Dict[str, SonosSpeaker] = {}
+        self.active_speaker: Optional[SonosSpeaker] = None
         self.known_ips = []
         cache_file = os.path.expanduser("~/.config/sonos/speakers.json")
         if os.path.exists(cache_file):
             try:
-                with open(cache_file, "r") as f:
+                with open(cache_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
-                    self.known_ips = list(data.get("speakers", {}).keys())
+                    for ip, s in data.get("speakers", {}).items():
+                        self.known_ips.append(ip)
+                        name = s.get("name") or s.get("model") or f"Sonos ({ip})"
+                        uid = s.get("udn") or ip
+                        self.speakers[ip] = SonosSpeaker(ip, name, uid)
+                    if self.speakers:
+                        self.active_speaker = list(self.speakers.values())[0]
             except Exception:
                 pass
 
@@ -352,7 +359,7 @@ class SonosManager:
                 s.connect(("8.8.8.8", 80))
                 my_ip = s.getsockname()[0]
             prefix = ".".join(my_ip.split(".")[:3])
-            for i in range(2, 100):
+            for i in range(1, 255):
                 ip = f"{prefix}.{i}"
                 if ip not in candidates:
                     candidates.append(ip)

@@ -829,7 +829,9 @@ class SonosApp(Gtk.Window):
             self.btn_play.set_label("▶")
 
         if not self.is_slider_dragging:
+            self.updating_volume = True
             self.volume_slider.set_value(spk.volume)
+            self.updating_volume = False
             self.lbl_volume.set_text(f"{spk.volume}%")
 
         if spk.is_muted:
@@ -880,6 +882,8 @@ class SonosApp(Gtk.Window):
         self.btn_mute.set_label("🔇" if new_mute else "🔊")
 
     def on_volume_changed(self, scale):
+        if getattr(self, "updating_volume", False):
+            return
         val = int(scale.get_value())
         self.lbl_volume.set_text(f"{val}%")
         spk = self.manager.active_speaker
