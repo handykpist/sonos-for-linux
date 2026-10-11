@@ -81,7 +81,7 @@ Exec=$OFFICIAL_LAUNCHER
 Icon=sonos
 Terminal=false
 Categories=AudioVideo;Audio;Player;
-Keywords=sonos;music;speaker;audio;s1;controller;vardagsrum;spotify;radio;
+Keywords=sonos;music;speaker;audio;s1;controller;livingroom;spotify;radio;
 StartupWMClass=sonos.exe
 Actions=NativeController;
 
