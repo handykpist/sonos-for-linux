@@ -60,16 +60,7 @@ fi
 EOF
 chmod +x "$OFFICIAL_LAUNCHER"
 
-# 3. Install Lightweight Native Linux Controller
-echo "[*] Installing native Linux GTK3 Controller..."
-NATIVE_LAUNCHER="$HOME/.local/bin/sonos-native"
-cat << EOF > "$NATIVE_LAUNCHER"
-#!/usr/bin/env bash
-exec python3 "$SCRIPT_DIR/sonos_app.py" "\$@"
-EOF
-chmod +x "$NATIVE_LAUNCHER"
-
-# 4. Create Desktop Entry in Applications Menu
+# 3. Create Desktop Entry in Applications Menu
 DESKTOP_FILE="$HOME/.local/share/applications/sonos.desktop"
 cat << EOF > "$DESKTOP_FILE"
 [Desktop Entry]
@@ -83,15 +74,10 @@ Terminal=false
 Categories=AudioVideo;Audio;Player;
 Keywords=sonos;music;speaker;audio;s1;controller;livingroom;spotify;radio;
 StartupWMClass=sonos.exe
-Actions=NativeController;
-
-[Desktop Action NativeController]
-Name=Launch Lightweight Native Controller (GTK3)
-Exec=$NATIVE_LAUNCHER
 EOF
 chmod +x "$DESKTOP_FILE"
 
-# 5. Update Desktop Database & Icon Cache
+# 4. Update Desktop Database & Icon Cache
 if command -v update-desktop-database >/dev/null 2>&1; then
     update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
 fi
@@ -99,11 +85,13 @@ if command -v gtk-update-icon-cache >/dev/null 2>&1; then
     gtk-update-icon-cache -f -t "$HOME/.local/share/icons/hicolor" 2>/dev/null || true
 fi
 
+# Clean up legacy sonos-native launcher if present
+rm -f "$HOME/.local/bin/sonos-native"
+
 echo ""
-echo "[+] Successfully installed Sonos Controller on Linux Mint!"
+echo "[+] Successfully installed Sonos S1 Controller on Linux Mint!"
 echo "    • Application:  $DESKTOP_FILE"
-echo "    • Native App:   $NATIVE_LAUNCHER"
-echo "    • Wine App:     $WINE_LAUNCHER"
+echo "    • Launcher:     $OFFICIAL_LAUNCHER"
 echo "    • Icon:         $HOME/.local/share/icons/hicolor/256x256/apps/sonos.png"
 echo ""
 echo "You can now open 'Sonos Controller' from your Linux Mint Start Menu"
