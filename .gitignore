@@ -1,0 +1,15 @@
+# Wine Prefix & Temporary Files
+.wine/
+extracted/
+__pycache__/
+*.pyc
+*.log
+*.exe
+*.msi
+\!*
+test_tls.*
+
+# Standalone Karaoke Repository
+karaoke/
+launch_karaoke.sh
+
