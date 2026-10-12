@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sonos Touchscreen Controller</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="touch-screen">
+    <!-- Ambient Dynamic Glow Background -->
+    <div id="ambient-glow" class="ambient-glow"></div>
+    <div class="screen-vignette"></div>
+
+    <div class="kiosk-container">
+        <!-- Top Control & Status Header (48px) -->
+        <header class="top-header">
+            <div class="header-left">
+                <button id="btn-room-select" class="pill-btn room-pill" title="Switch Room">
+                    <span class="status-dot"></span>
+                    <span id="active-room-label">Living Room</span>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+                </button>
+            </div>
+
+            <div class="header-center">
+                <div class="digital-clock" id="digital-clock">12:00</div>
+            </div>
+
+            <div class="header-right">
+                <button id="btn-lyrics-toggle" class="header-icon-btn" title="Toggle Synchronized Lyrics">
+                    <span class="icon">🎤</span>
+                    <span class="btn-text">Lyrics</span>
+                </button>
+                <button id="btn-favorites-toggle" class="header-icon-btn" title="Sonos Radio & Favorites">
+                    <span class="icon">⭐</span>
+                    <span class="btn-text">Radio</span>
+                </button>
+                <button id="btn-night-mode" class="header-icon-btn" title="Dim Screen / Sleep">
+                    <span class="icon">🌙</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Controller Body (800x432) -->
+        <main class="main-body" id="main-body">
+            <!-- Left Panel: Album Art & Track Meta -->
+            <section class="meta-section">
+                <div class="artwork-wrapper">
+                    <img id="album-art" class="album-art" src="" alt="Album Art" style="display: none;">
+                    <div id="art-placeholder" class="art-placeholder">
+                        <div class="sonos-icon-logo">SONOS</div>
+                        <div class="speaker-wave-icon">🔊</div>
+                    </div>
+                </div>
+
+                <div class="track-info">
+                    <h1 id="track-title" class="track-title">Ready to Play</h1>
+                    <div id="track-artist" class="track-artist">Select a room or favorite</div>
+                    <div id="track-album" class="track-album"></div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Scrub Bar, Transport, Volume -->
+            <section class="controls-section">
+                <!-- Scrubbing Progress Bar -->
+                <div class="progress-box">
+                    <div class="time-labels">
+                        <span id="time-elapsed">0:00</span>
+                        <div class="waveform-anim" id="waveform-anim">
+                            <span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span>
+                        </div>
+                        <span id="time-total">0:00</span>
+                    </div>
+                    <div class="progress-track" id="progress-track">
+                        <div class="progress-fill" id="progress-fill"></div>
+                        <div class="progress-thumb" id="progress-thumb"></div>
+                    </div>
+                </div>
+
+                <!-- Primary Large Touch Playback Controls -->
+                <div class="transport-row">
+                    <button id="btn-prev" class="touch-btn transport-btn" title="Previous Track">
+                        <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                    </button>
+
+                    <button id="btn-playpause" class="touch-btn play-btn" title="Play / Pause">
+                        <svg id="play-icon" viewBox="0 0 24 24" width="44" height="44" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                        <svg id="pause-icon" viewBox="0 0 24 24" width="44" height="44" fill="currentColor" style="display: none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    </button>
+
+                    <button id="btn-next" class="touch-btn transport-btn" title="Next Track">
+                        <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                    </button>
+                </div>
+
+                <!-- Capacitive Touch Volume Controls -->
+                <div class="volume-container">
+                    <button id="btn-vol-down" class="touch-btn vol-step-btn" title="Volume Down">-</button>
+
+                    <div class="vol-slider-wrap">
+                        <button id="btn-mute" class="mute-icon-btn" title="Mute Toggle">
+                            <svg id="vol-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                        </button>
+                        <div class="vol-track" id="vol-track">
+                            <div class="vol-fill" id="vol-fill"></div>
+                            <div class="vol-thumb" id="vol-thumb"></div>
+                        </div>
+                        <span id="vol-percent" class="vol-percent">25%</span>
+                    </div>
+
+                    <button id="btn-vol-up" class="touch-btn vol-step-btn" title="Volume Up">+</button>
+                </div>
+            </section>
+        </main>
+
+        <!-- Slide-Over Drawer: Synchronized Lyrics Mode -->
+        <div class="lyrics-drawer" id="lyrics-drawer">
+            <div class="drawer-header">
+                <div class="drawer-title">
+                    <span>🎤 Live Synchronized Lyrics</span>
+                    <span id="lyrics-source-badge" class="badge">LRC Sync</span>
+                </div>
+                <button id="btn-close-lyrics" class="close-drawer-btn">✕ Close</button>
+            </div>
+            <div class="lyrics-scroll-box" id="lyrics-scroll-box">
+                <div class="lyrics-lines" id="lyrics-lines">
+                    <p class="lyrics-notice">Fetching lyrics...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide-Over Drawer: Sonos Radio & Favorites -->
+        <div class="favorites-drawer" id="favorites-drawer">
+            <div class="drawer-header">
+                <div class="drawer-title">
+                    <span>⭐ Sonos Favorites & Radio Stations</span>
+                </div>
+                <button id="btn-close-favorites" class="close-drawer-btn">✕ Close</button>
+            </div>
+            <div class="favorites-grid" id="favorites-grid">
+                <!-- Dynamically populated favorites cards -->
+                <p class="lyrics-notice">Loading your Sonos favorites...</p>
+            </div>
+        </div>
+
+        <!-- Room Selector Modal -->
+        <div class="modal-overlay" id="room-modal">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h2>Select Sonos Room</h2>
+                    <button id="btn-close-room-modal" class="close-drawer-btn">✕</button>
+                </div>
+                <div class="rooms-list" id="rooms-list">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Night / Sleep Screen Dimmer Mode Overlay -->
+        <div class="night-dimmer-overlay" id="night-dimmer">
+            <div class="night-clock" id="night-clock">12:00</div>
+            <div class="night-date" id="night-date">Monday, October 12</div>
+            <div class="night-track-mini" id="night-track-mini">Playing: Don't Let the Sun Go Down on Me</div>
+            <div class="night-wake-hint">Tap anywhere to wake up screen</div>
+        </div>
+    </div>
+
+    <script src="/app.js"></script>
+</body>
+</html>

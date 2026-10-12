@@ -1,0 +1,16 @@
+[Unit]
+Description=Sonos Touchscreen Controller Kiosk for Raspberry Pi 4
+After=network-online.target graphical.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=%h/.Xauthority
+ExecStart=%h/.local/share/sonos-touchscreen/kiosk/launch_kiosk.sh
+WorkingDirectory=%h/.local/share/sonos-touchscreen
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target

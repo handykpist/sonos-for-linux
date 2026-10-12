@@ -1,0 +1,131 @@
+# Sonos Touchscreen Controller for Raspberry Pi 4 (7" Touch Display)
+
+A dedicated, standalone touch controller for your household **Sonos** sound system, specifically crafted for the **Raspberry Pi 4** and the **Official Raspberry Pi 7" Touchscreen (800×480)**.
+
+Designed to live on your kitchen counter, living room wall, or bedside table as an instant, always-on smart home music hub.
+
+---
+
+## 🌟 Key Features
+
+- **Tailored 800×480 Touch Ergonomics**:
+  - Pixel-exact UI layout designed specifically for the official 7" Raspberry Pi Touch Display.
+  - Large capacitive touch targets (58px–76px) for effortless, tap-and-go control without needing a mouse or keyboard.
+  - Zero scrollbars or cluttered desktop frames in full-screen Kiosk mode.
+
+- **Full Sonos System Control**:
+  - **Auto-Discovery**: Dynamically discovers all Sonos speakers across your home via UPnP/SSDP with zero hardcoded IPs or names.
+  - **Multi-Room Selector**: Easily switch between rooms (Living Room, Kitchen, Bedroom, Move, Roam) with one touch.
+  - **Playback Transport**: Big, tactile Play, Pause, Next Track, and Previous Track buttons.
+  - **Touch Volume Control**: Capacitive touch volume slider with instant tactile step buttons (`-` and `+`) and 1-tap Mute.
+  - **Scrubbing Seek Bar**: Tap anywhere on the progress track to jump forward or backward in the track.
+
+- **Now Playing Artwork & Visualizer**:
+  - High-resolution album artwork with real-time dynamic ambient backlight glow.
+  - Animated audio playback waveform.
+  - Formatted elapsed / total duration countdowns.
+
+- **Sonos Radio & Favorites**:
+  - Slide-over drawer with all your household Sonos Favorites, Spotify playlists, and TuneIn radio stations.
+  - Tap any station or playlist to begin playback instantly.
+
+- **🎤 Live Synchronized Lyrics Mode**:
+  - One-tap drawer featuring synchronized word-by-word / line-by-line karaoke lyrics powered by LRCLIB.
+
+- **🌙 Night / Sleep Mode**:
+  - One-touch sleep mode transforms the screen into a subtle, low-light digital clock and date display.
+  - Tap anywhere on the screen to wake it up instantly.
+
+- **100% Native ARM64 & ARMhf**:
+  - Built with pure Python standard library and lightweight web standards.
+  - Zero heavy x86 emulation or Wine overhead.
+  - Uses < 35 MB of RAM on Raspberry Pi OS.
+
+---
+
+## 🛠️ Hardware Requirements
+
+1. **Raspberry Pi 4** (1 GB, 2 GB, 4 GB, or 8 GB) or **Raspberry Pi 3 B+ / 5**.
+2. **Official Raspberry Pi 7" Touchscreen Display** (800×480 DSI) or any 7" HDMI/DSI capacitive display.
+3. MicroSD card with **Raspberry Pi OS** (64-bit Bookworm recommended, Bullseye also supported with Desktop autologin enabled).
+4. Standard 5V / 3A USB-C power supply.
+
+---
+
+## 🚀 Quick Installation
+
+On your Raspberry Pi 4 terminal (or via SSH):
+
+```bash
+# 1. Clone this repository
+git clone https://github.com/handykpist/sonos-rpi-touchscreen.git
+cd sonos-rpi-touchscreen
+
+# 2. Run the automated installer
+chmod +x install.sh
+./install.sh
+```
+
+The installer will:
+1. Verify system packages (`python3`, `chromium-browser`, `unclutter`).
+2. Deploy the touchscreen application to `~/.local/share/sonos-touchscreen`.
+3. Configure the systemd user service `sonos-touchscreen.service` to boot automatically into fullscreen Kiosk mode on startup.
+
+---
+
+## 🔄 Screen Rotation (Upside-Down Display Fix)
+
+Many popular 3D-printed cases and desktop stands for the official 7" display mount the screen upside down (so the power cables exit at the top or side).
+
+Use the included rotation tool:
+
+```bash
+# Rotate 180 degrees (standard stand orientation)
+sudo ~/.local/share/sonos-touchscreen/kiosk/setup_screen.sh rotate180
+sudo reboot
+
+# To reset to normal orientation:
+sudo ~/.local/share/sonos-touchscreen/kiosk/setup_screen.sh rotate0
+sudo reboot
+```
+
+### Manual Configuration:
+- **Raspberry Pi OS Bookworm (Wayland / KMS)**: Add `video=DSI-1:800x480@60,rotate=180` to the end of the line in `/boot/firmware/cmdline.txt`.
+- **Raspberry Pi OS Bullseye / Legacy (X11)**: Add `display_lcd_rotate=2` to `/boot/config.txt`.
+
+---
+
+## 💡 Backlight Brightness Control
+
+You can adjust the screen brightness from terminal or scripts:
+
+```bash
+# Set brightness between 0 (off) and 255 (maximum)
+sudo ~/.local/share/sonos-touchscreen/kiosk/setup_screen.sh brightness 180
+```
+
+---
+
+## 🔧 Service Management
+
+- **Start Controller**: `systemctl --user start sonos-touchscreen.service`
+- **Stop Controller**: `systemctl --user stop sonos-touchscreen.service`
+- **Restart Controller**: `systemctl --user restart sonos-touchscreen.service`
+- **Check Status**: `systemctl --user status sonos-touchscreen.service`
+- **View Live Logs**: `journalctl --user -u sonos-touchscreen.service -f`
+
+---
+
+## 🌐 Remote Browser Access
+
+You can also access the touch controller from any phone, tablet, or PC on your home Wi-Fi:
+
+```
+http://<raspberry-pi-ip>:5000
+```
+
+---
+
+## 📄 License
+
+MIT License. Designed with ❤️ for the Sonos and Raspberry Pi smart home community.

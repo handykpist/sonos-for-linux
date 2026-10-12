@@ -1,0 +1,197 @@
+#!/usr/bin/env python3
+"""
+Sonos Touchscreen Controller Server for Raspberry Pi 4 (800x480).
+Serves the responsive touch interface and provides REST API for playback, volume, and lyrics.
+"""
+
+import os
+import sys
+import json
+import socket
+import urllib.request
+from http.server import HTTPServer, SimpleHTTPRequestHandler, ThreadingHTTPServer
+
+from sonos_device import SonosDeviceController
+from lyrics import fetch_lyrics
+
+PORT = 5000
+STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+
+def get_local_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return '127.0.0.1'
+
+LOCAL_IP = get_local_ip()
+
+class TouchscreenHandler(SimpleHTTPRequestHandler):
+    def log_message(self, format, *args):
+        # Suppress routine GET logging for performance on Raspberry Pi
+        return
+
+    def do_GET(self):
+        url_parts = self.path.split("?")
+        path = url_parts[0]
+        
+        if path in ("/", "/index.html"):
+            self.serve_file(os.path.join(STATIC_DIR, "index.html"), "text/html; charset=utf-8")
+            return
+        elif path == "/style.css":
+            self.serve_file(os.path.join(STATIC_DIR, "style.css"), "text/css; charset=utf-8")
+            return
+        elif path == "/app.js":
+            self.serve_file(os.path.join(STATIC_DIR, "app.js"), "application/javascript; charset=utf-8")
+            return
+        elif path == "/api/status":
+            st = self.server.controller.query_state()
+            self.send_json(st)
+            return
+        elif path == "/api/speakers":
+            speakers = self.server.controller.get_speakers_list()
+            active = self.server.controller.active_room
+            self.send_json({"speakers": speakers, "active": active})
+            return
+        elif path == "/api/favorites":
+            favs = self.server.controller.get_favorites()
+            self.send_json({"favorites": favs})
+            return
+        elif path == "/api/lyrics":
+            st = self.server.controller.query_state()
+            lyrics = fetch_lyrics(st["title"], st["artist"], st["duration"], st["album"])
+            self.send_json(lyrics)
+            return
+        elif path == "/api/albumart":
+            st = self.server.controller.query_state()
+            art_url = st.get("albumArt", "")
+            if art_url:
+                try:
+                    req = urllib.request.Request(art_url, headers={"User-Agent": "SonosTouchscreen/1.0"})
+                    with urllib.request.urlopen(req, timeout=3.0) as resp:
+                        data = resp.read()
+                        ctype = resp.headers.get("Content-Type", "image/jpeg")
+                        self.send_response(200)
+                        self.send_header("Content-Type", ctype)
+                        self.send_header("Content-Length", str(len(data)))
+                        self.send_header("Cache-Control", "public, max-age=86400")
+                        self.end_headers()
+                        self.wfile.write(data)
+                        return
+                except Exception:
+                    pass
+            self.send_error(404, "Album Art Not Found")
+            return
+
+        super().do_GET()
+
+    def do_POST(self):
+        content_len = int(self.headers.get("Content-Length", 0))
+        post_data = self.rfile.read(content_len) if content_len > 0 else b"{}"
+        try:
+            payload = json.loads(post_data.decode("utf-8")) if post_data else {}
+        except Exception:
+            payload = {}
+
+        path = self.path
+
+        if path == "/api/speaker":
+            room = payload.get("room", "")
+            success = self.server.controller.set_active_room(room)
+            self.send_json({"success": success, "active": self.server.controller.active_room})
+            return
+        elif path == "/api/play":
+            self.server.controller.play()
+            self.send_json({"success": True})
+            return
+        elif path == "/api/pause":
+            self.server.controller.pause()
+            self.send_json({"success": True})
+            return
+        elif path == "/api/playpause":
+            st = self.server.controller.query_state()
+            if st.get("state") == "PLAYING":
+                self.server.controller.pause()
+            else:
+                self.server.controller.play()
+            self.send_json({"success": True})
+            return
+        elif path == "/api/next":
+            self.server.controller.next()
+            self.send_json({"success": True})
+            return
+        elif path == "/api/prev":
+            self.server.controller.previous()
+            self.send_json({"success": True})
+            return
+        elif path == "/api/volume":
+            vol = payload.get("volume", 0)
+            self.server.controller.set_volume(vol)
+            self.send_json({"success": True, "volume": vol})
+            return
+        elif path == "/api/mute":
+            current_mute = self.server.controller.get_mute()
+            new_mute = not current_mute
+            self.server.controller.set_mute(new_mute)
+            self.send_json({"success": True, "muted": new_mute})
+            return
+        elif path == "/api/seek":
+            pos = float(payload.get("position", 0.0))
+            self.server.controller.seek(pos)
+            self.send_json({"success": True, "position": pos})
+            return
+        elif path == "/api/favorite/play":
+            uri = payload.get("uri", "")
+            meta = payload.get("meta", "")
+            self.server.controller.play_uri(uri, meta)
+            self.send_json({"success": True})
+            return
+
+        self.send_error(404, "Endpoint Not Found")
+
+    def serve_file(self, full_path, content_type):
+        if not os.path.exists(full_path):
+            self.send_error(404, "File Not Found")
+            return
+        with open(full_path, "rb") as f:
+            data = f.read()
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-cache, must-revalidate")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def send_json(self, data, status=200):
+        body = json.dumps(data, ensure_ascii=False).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+class TouchscreenServer(ThreadingHTTPServer):
+    def __init__(self, server_address, RequestHandlerClass):
+        super().__init__(server_address, RequestHandlerClass)
+        self.controller = SonosDeviceController()
+
+def run():
+    server_address = ("", PORT)
+    httpd = TouchscreenServer(server_address, TouchscreenHandler)
+    print("=" * 60)
+    print("     Sonos Touchscreen Controller (Raspberry Pi 4)     ")
+    print(f"     Local Kiosk URL: http://localhost:{PORT}")
+    print(f"     Network URL:     http://{LOCAL_IP}:{PORT}")
+    print("=" * 60)
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print("\nStopping Sonos Touchscreen Server...")
+        httpd.server_close()
+
+if __name__ == "__main__":
+    run()
