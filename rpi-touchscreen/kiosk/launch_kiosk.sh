@@ -94,9 +94,9 @@ exec $CHROMIUM_CMD \
     --kiosk \
     --noerrdialogs \
     --disable-infobars \
-    --disable-gpu \
-    --disable-gpu-compositing \
-    --disable-software-rasterizer \
+    --disable-hang-monitor \
+    --disable-renderer-backgrounding \
+    --disable-backgrounding-occluded-windows \
     --no-first-run \
     --disable-session-crashed-bubble \
     --disable-restore-session-state \
@@ -106,13 +106,9 @@ exec $CHROMIUM_CMD \
     --disable-pinch \
     --overscroll-history-navigation=0 \
     --disable-translate \
-    --disable-features=Translate,InterestFeedContentSuggestions \
+    --disable-features=Translate \
     --password-store=basic \
     --use-mock-keychain \
-    --disable-background-networking \
-    --disable-component-update \
-    --disable-sync \
-    --disable-default-apps \
     --proxy-bypass-list="127.0.0.1;localhost" \
     --window-size=800,480 \
     --window-position=0,0 \
