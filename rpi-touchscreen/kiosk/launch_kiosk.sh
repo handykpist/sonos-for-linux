@@ -54,6 +54,8 @@ exec $CHROMIUM_CMD \
     --overscroll-history-navigation=0 \
     --disable-translate \
     --disable-features=Translate \
+    --password-store=basic \
+    --use-mock-keychain \
     --window-size=800,480 \
     --window-position=0,0 \
     --app="$KIOSK_URL" "$@"
