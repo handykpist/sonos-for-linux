@@ -116,6 +116,34 @@ sudo ~/.local/share/sonos-touchscreen/kiosk/setup_screen.sh brightness 180
 
 ---
 
+## 🌙 Nightly 01:00 Auto-Update
+
+The controller includes an automated background updater that checks your Git repository every night at **01:00 AM** and applies updates without manual intervention.
+
+- **Non-disruptive**: It checks remote Git commit hashes first. If no new commits were pushed, it exits silently and leaves your current playback uninterrupted.
+- **Auto-Restart**: If a new commit is detected on GitHub, it fast-forward pulls the changes, syncs the application files, reloads systemd units, and restarts the kiosk smoothly.
+- **Offline Resilient & Catch-Up**: Uses `Persistent=true` so if your Raspberry Pi was turned off at 01:00, it checks for updates immediately when powered on next.
+
+### Auto-Update Commands:
+- **Check Timer Schedule**:
+  ```bash
+  systemctl --user list-timers sonos-touchscreen-update.timer
+  ```
+- **Run Update Immediately (Manual Check)**:
+  ```bash
+  ~/.local/share/sonos-touchscreen/kiosk/auto_update.sh
+  ```
+- **Force Update**:
+  ```bash
+  ~/.local/share/sonos-touchscreen/kiosk/auto_update.sh --force
+  ```
+- **View Update History & Logs**:
+  ```bash
+  cat ~/.local/share/sonos-touchscreen/update.log
+  ```
+
+---
+
 ## 🌐 Remote Browser Access
 
 You can also access the touch controller from any phone, tablet, or PC on your home Wi-Fi:

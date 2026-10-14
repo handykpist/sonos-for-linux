@@ -85,6 +85,18 @@ class TouchscreenHandler(SimpleHTTPRequestHandler):
                     pass
             self.send_error(404, "Album Art Not Found")
             return
+        elif path == "/api/update/status":
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            log_file = os.path.join(base_dir, "update.log")
+            recent_log = []
+            if os.path.exists(log_file):
+                try:
+                    with open(log_file, "r") as f:
+                        recent_log = [line.strip() for line in f.readlines()[-15:] if line.strip()]
+                except Exception:
+                    pass
+            self.send_json({"log": recent_log})
+            return
 
         super().do_GET()
 
@@ -148,6 +160,16 @@ class TouchscreenHandler(SimpleHTTPRequestHandler):
             meta = payload.get("meta", "")
             self.server.controller.play_uri(uri, meta)
             self.send_json({"success": True})
+            return
+        elif path == "/api/update/trigger":
+            import subprocess
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            script_path = os.path.join(base_dir, "kiosk", "auto_update.sh")
+            if os.path.exists(script_path):
+                subprocess.Popen(["bash", script_path, "--force"])
+                self.send_json({"success": True, "message": "Auto-update triggered in background"})
+            else:
+                self.send_json({"success": False, "error": "Update script not found"}, status=404)
             return
 
         self.send_error(404, "Endpoint Not Found")

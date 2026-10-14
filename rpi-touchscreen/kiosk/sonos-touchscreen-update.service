@@ -1,0 +1,10 @@
+[Unit]
+Description=Sonos Touchscreen Nightly Auto-Update
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/share/sonos-touchscreen/kiosk/auto_update.sh
+StandardOutput=journal
+StandardError=journal

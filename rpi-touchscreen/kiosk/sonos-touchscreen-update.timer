@@ -1,0 +1,10 @@
+[Unit]
+Description=Nightly 01:00 Auto-Update Timer for Sonos Touchscreen Controller
+
+[Timer]
+OnCalendar=*-*-* 01:00:00
+Persistent=true
+RandomizedDelaySec=60
+
+[Install]
+WantedBy=timers.target
