@@ -159,6 +159,53 @@
             </div>
         </div>
 
+        <!-- Hidden Corner Power & Exit Button (Bottom Left) -->
+        <button id="btn-hidden-power" class="hidden-corner-btn" title="Exit / Power Menu" aria-label="Exit / Power Menu">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                <path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42A6.92 6.92 0 0 1 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.12.95-4.02 2.45-5.3L6.03 5.28C4.17 6.95 3 9.34 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/>
+            </svg>
+        </button>
+
+        <!-- Power & Exit Modal -->
+        <div class="modal-overlay" id="power-modal">
+            <div class="modal-card power-modal-card">
+                <div class="modal-header">
+                    <h2>Power & System</h2>
+                    <button id="btn-close-power-modal" class="close-drawer-btn">✕</button>
+                </div>
+                <div class="power-options-grid">
+                    <button id="btn-power-exit" class="power-card power-card-exit">
+                        <span class="power-card-icon">🚪</span>
+                        <div class="power-card-info">
+                            <span class="power-card-title">Exit to Desktop</span>
+                            <span class="power-card-sub">Close kiosk & stop app</span>
+                        </div>
+                    </button>
+                    <button id="btn-power-restart" class="power-card power-card-restart">
+                        <span class="power-card-icon">🔄</span>
+                        <div class="power-card-info">
+                            <span class="power-card-title">Restart Sonos App</span>
+                            <span class="power-card-sub">Reload UI & backend</span>
+                        </div>
+                    </button>
+                    <button id="btn-power-reboot" class="power-card power-card-reboot">
+                        <span class="power-card-icon">⚡</span>
+                        <div class="power-card-info">
+                            <span class="power-card-title">Reboot Raspberry Pi</span>
+                            <span class="power-card-sub">Restart hardware</span>
+                        </div>
+                    </button>
+                    <button id="btn-power-shutdown" class="power-card power-card-shutdown">
+                        <span class="power-card-icon">🛑</span>
+                        <div class="power-card-info">
+                            <span class="power-card-title">Shut Down Device</span>
+                            <span class="power-card-sub">Safely power off</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Night / Sleep Screen Dimmer Mode Overlay -->
         <div class="night-dimmer-overlay" id="night-dimmer">
             <div class="night-clock" id="night-clock">12:00</div>

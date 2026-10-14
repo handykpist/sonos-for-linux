@@ -556,6 +556,14 @@ body.touch-screen {
     margin-bottom: 16px;
 }
 
+.modal-header h2 {
+    color: #f8fafc;
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+    font-family: 'Outfit', sans-serif;
+}
+
 .rooms-list {
     display: flex;
     flex-direction: column;
@@ -637,3 +645,117 @@ body.touch-screen {
     font-size: 12px;
     color: rgba(255, 255, 255, 0.15);
 }
+
+/* Hidden Power & Exit Button (Bottom Left Corner) */
+.hidden-corner-btn {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 68px;
+    height: 68px;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-start;
+    padding: 14px;
+    cursor: pointer;
+    z-index: 15;
+    transition: color 0.25s ease, background 0.25s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.hidden-corner-btn:hover,
+.hidden-corner-btn:active {
+    color: rgba(255, 255, 255, 0.75);
+    background: radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.14) 0%, transparent 70%);
+}
+
+/* Power & Exit Modal */
+.power-modal-card {
+    width: 500px;
+    max-width: 90%;
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 20px 24px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85);
+}
+
+.power-options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.power-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    color: #fff;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.power-card:active {
+    transform: scale(0.96);
+}
+
+.power-card-exit:hover,
+.power-card-exit:active {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: #f59e0b;
+}
+
+.power-card-restart:hover,
+.power-card-restart:active {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: var(--accent);
+}
+
+.power-card-reboot:hover,
+.power-card-reboot:active {
+    background: rgba(168, 85, 247, 0.15);
+    border-color: #a855f7;
+}
+
+.power-card-shutdown:hover,
+.power-card-shutdown:active {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: #ef4444;
+}
+
+.power-card-icon {
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.power-card-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.power-card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #f1f5f9;
+}
+
+.power-card-sub {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.45);
+    margin-top: 2px;
+}
+

@@ -36,6 +36,13 @@ Designed to live on your kitchen counter, living room wall, or bedside table as 
   - One-touch sleep mode transforms the screen into a subtle, low-light digital clock and date display.
   - Tap anywhere on the screen to wake it up instantly.
 
+- **🔒 Hidden Power & Exit Menu (Bottom-Left Corner)**:
+  - An unobtrusive, hidden touch button in the bottom-left corner opens a tactile system menu:
+    - **Exit to Desktop**: Close kiosk mode and return to Raspberry Pi OS desktop.
+    - **Restart Sonos App**: Cleanly reload the UI and backend service.
+    - **Reboot Raspberry Pi**: Safely reboot the hardware.
+    - **Shut Down Device**: Safely power off the Raspberry Pi.
+
 - **100% Native ARM64 & ARMhf**:
   - Built with pure Python standard library and lightweight web standards.
   - Zero heavy x86 emulation or Wine overhead.

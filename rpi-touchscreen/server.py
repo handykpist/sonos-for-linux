@@ -171,6 +171,39 @@ class TouchscreenHandler(SimpleHTTPRequestHandler):
             else:
                 self.send_json({"success": False, "error": "Update script not found"}, status=404)
             return
+        elif path == "/api/system/exit":
+            import threading, time
+            def _exit():
+                time.sleep(0.4)
+                os.system("systemctl --user stop sonos-touchscreen 2>/dev/null || pkill -f chromium")
+                os.system("pkill -f 'python3.*server.py' 2>/dev/null || true")
+            threading.Thread(target=_exit, daemon=True).start()
+            self.send_json({"success": True, "message": "Exiting kiosk to desktop..."})
+            return
+        elif path == "/api/system/restart":
+            import threading, time
+            def _restart():
+                time.sleep(0.4)
+                os.system("systemctl --user restart sonos-touchscreen 2>/dev/null")
+            threading.Thread(target=_restart, daemon=True).start()
+            self.send_json({"success": True, "message": "Restarting Sonos App..."})
+            return
+        elif path == "/api/system/reboot":
+            import threading, time
+            def _reboot():
+                time.sleep(0.5)
+                os.system("sudo reboot 2>/dev/null || systemctl reboot 2>/dev/null")
+            threading.Thread(target=_reboot, daemon=True).start()
+            self.send_json({"success": True, "message": "Rebooting Raspberry Pi..."})
+            return
+        elif path == "/api/system/shutdown":
+            import threading, time
+            def _shutdown():
+                time.sleep(0.5)
+                os.system("sudo shutdown -h now 2>/dev/null || systemctl poweroff 2>/dev/null")
+            threading.Thread(target=_shutdown, daemon=True).start()
+            self.send_json({"success": True, "message": "Shutting down Raspberry Pi..."})
+            return
 
         self.send_error(404, "Endpoint Not Found")
 
