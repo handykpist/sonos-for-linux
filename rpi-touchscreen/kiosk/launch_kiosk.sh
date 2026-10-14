@@ -38,18 +38,44 @@ if [ $WAITED -ge $MAX_WAIT ]; then
     echo "[!] Warning: Backend server did not respond within 15s. Check $LOG_FILE"
 fi
 
-# 3. Disable screen sleep and hide mouse pointer if unclutter is installed
+# 3. Disable all screen blanking, sleep, DPMS, and screensavers (prevents screen from turning white on DSI displays)
+# X11 DPMS & blanking
 if command -v xset >/dev/null 2>&1; then
     xset s off 2>/dev/null || true
     xset -dpms 2>/dev/null || true
     xset s noblank 2>/dev/null || true
 fi
 
+# Linux console blanking (runtime)
+if [ -w /sys/module/kernel/parameters/consoleblank ]; then
+    echo 0 > /sys/module/kernel/parameters/consoleblank 2>/dev/null || true
+fi
+
+# Wayland / Wayfire idle screen blanking
+if [ -f "$HOME/.config/wayfire.ini" ]; then
+    sed -i 's/dpms_timeout = .*/dpms_timeout = 0/' "$HOME/.config/wayfire.ini" 2>/dev/null || true
+    sed -i 's/screensaver_timeout = .*/screensaver_timeout = 0/' "$HOME/.config/wayfire.ini" 2>/dev/null || true
+fi
+
+# Wayland / Labwc screen power
+if command -v wlopm >/dev/null 2>&1; then
+    wlopm --on '*' 2>/dev/null || true
+fi
+
+# Hide mouse pointer on inactivity if unclutter is installed
 if command -v unclutter >/dev/null 2>&1; then
     unclutter -idle 1 -root >/dev/null 2>&1 &
 fi
 
-# 4. Launch Chromium in Kiosk Mode with touch screen flags
+# 4. Clean up any previous Chromium crash flags to prevent crash restore bubbles / white overlays
+for p in "$HOME/.config/chromium/Default/Preferences" "$HOME/.config/chromium/Local State"; do
+    if [ -f "$p" ]; then
+        sed -i 's/"exited_cleanly":false/"exited_cleanly":true/' "$p" 2>/dev/null || true
+        sed -i 's/"exit_type":"Crashed"/"exit_type":"Normal"/' "$p" 2>/dev/null || true
+    fi
+done
+
+# 5. Launch Chromium in Kiosk Mode with touch and GPU-stabilized flags for Raspberry Pi 3B
 KIOSK_URL="http://127.0.0.1:5000"
 CHROMIUM_CMD=""
 
@@ -68,15 +94,25 @@ exec $CHROMIUM_CMD \
     --kiosk \
     --noerrdialogs \
     --disable-infobars \
+    --disable-gpu \
+    --disable-gpu-compositing \
+    --disable-software-rasterizer \
+    --no-first-run \
+    --disable-session-crashed-bubble \
+    --disable-restore-session-state \
     --check-for-update-interval=31536000 \
     --enable-features=OverlayScrollbar \
     --touch-events=enabled \
     --disable-pinch \
     --overscroll-history-navigation=0 \
     --disable-translate \
-    --disable-features=Translate \
+    --disable-features=Translate,InterestFeedContentSuggestions \
     --password-store=basic \
     --use-mock-keychain \
+    --disable-background-networking \
+    --disable-component-update \
+    --disable-sync \
+    --disable-default-apps \
     --proxy-bypass-list="127.0.0.1;localhost" \
     --window-size=800,480 \
     --window-position=0,0 \

@@ -30,14 +30,14 @@ body.touch-screen {
 /* Ambient glow & vignette */
 .ambient-glow {
     position: absolute;
-    top: -50px;
-    left: -50px;
-    width: 900px;
-    height: 580px;
-    background: radial-gradient(circle at 25% 40%, rgba(56, 189, 248, 0.22), transparent 60%);
-    filter: blur(60px);
+    top: 0;
+    left: 0;
+    width: 800px;
+    height: 480px;
+    background: radial-gradient(circle at 25% 40%, rgba(56, 189, 248, 0.22), transparent 70%);
     z-index: 0;
     transition: background 1.2s ease;
+    pointer-events: none;
 }
 
 .screen-vignette {
@@ -67,8 +67,7 @@ body.touch-screen {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: rgba(10, 15, 26, 0.6);
-    backdrop-filter: blur(12px);
+    background: rgba(10, 15, 26, 0.92);
     border-bottom: 1px solid var(--border);
 }
 
@@ -407,8 +406,7 @@ body.touch-screen {
     left: 0;
     width: 800px;
     height: 432px;
-    background: rgba(11, 17, 32, 0.95);
-    backdrop-filter: blur(24px);
+    background: #0b1120;
     z-index: 10;
     display: flex;
     flex-direction: column;
@@ -744,8 +742,7 @@ body.touch-screen {
     left: 0;
     width: 800px;
     height: 480px;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(8px);
+    background: rgba(0, 0, 0, 0.85);
     z-index: 20;
     display: none;
     align-items: center;

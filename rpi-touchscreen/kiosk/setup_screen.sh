@@ -54,10 +54,33 @@ case "$ACTION" in
             echo "[!] rpi_backlight device not found at /sys/class/backlight/rpi_backlight/brightness"
         fi
         ;;
+    noblank)
+        echo "[*] Disabling screen blanking and sleep on Raspberry Pi..."
+        # 1. raspi-config
+        if command -v raspi-config >/dev/null 2>&1; then
+            raspi-config nonint do_blanking 1 || true
+            echo "[+] Disabled screen blanking via raspi-config"
+        fi
+        # 2. cmdline.txt consoleblank=0
+        for f in /boot/firmware/cmdline.txt /boot/cmdline.txt; do
+            if [ -f "$f" ]; then
+                if ! grep -q "consoleblank=0" "$f"; then
+                    sed -i '1 s/$/ consoleblank=0/' "$f"
+                    echo "[+] Added consoleblank=0 to $f"
+                fi
+            fi
+        done
+        # 3. /sys runtime
+        if [ -w /sys/module/kernel/parameters/consoleblank ]; then
+            echo 0 > /sys/module/kernel/parameters/consoleblank || true
+        fi
+        echo "[+] Screen blanking disabled. Please reboot: sudo reboot"
+        ;;
     *)
-        echo "Usage: sudo $0 [rotate180 | rotate0 | brightness <0-255>]"
+        echo "Usage: sudo $0 [rotate180 | rotate0 | brightness <0-255> | noblank]"
         echo "  rotate180      - Rotates screen 180 degrees (standard for official stand)"
         echo "  rotate0        - Normal orientation"
         echo "  brightness 150 - Sets backlight level from 0 to 255"
+        echo "  noblank        - Permanently disables screen blanking / white screen sleep"
         ;;
 esac

@@ -16,6 +16,11 @@ if command -v apt-get >/dev/null 2>&1; then
     sudo apt-get install -y python3 chromium-browser unclutter
 fi
 
+# Disable Raspberry Pi OS screen blanking (prevents official 7" DSI display from turning white on idle)
+if command -v raspi-config >/dev/null 2>&1; then
+    sudo raspi-config nonint do_blanking 1 2>/dev/null || true
+fi
+
 # 2. Deploy application files
 echo "[*] Installing Sonos Touchscreen to $INSTALL_DIR..."
 mkdir -p "$INSTALL_DIR"
