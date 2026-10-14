@@ -136,17 +136,48 @@
             </div>
         </div>
 
-        <!-- Slide-Over Drawer: Sonos Radio & Favorites -->
+        <!-- Slide-Over Drawer: Sonos Radio, Favorites & Playlists (800x432) -->
         <div class="favorites-drawer" id="favorites-drawer">
             <div class="drawer-header">
                 <div class="drawer-title">
-                    <span>⭐ Sonos Favorites & Radio Stations</span>
+                    <span>⭐ Radio & Favorites</span>
                 </div>
-                <button id="btn-close-favorites" class="close-drawer-btn">✕ Close</button>
+                <div class="fav-filter-tabs">
+                    <button class="fav-tab-pill active" data-tab="all">All</button>
+                    <button class="fav-tab-pill" data-tab="radio">📻 Radio</button>
+                    <button class="fav-tab-pill" data-tab="playlist">🎵 Playlists</button>
+                    <button class="fav-tab-pill" data-tab="favorite">⭐ Favorites</button>
+                </div>
+                <div class="drawer-header-actions">
+                    <button id="btn-fav-add-current" class="action-pill-btn" title="Add Currently Playing to Favorites">⭐ + Current</button>
+                    <button id="btn-fav-add-custom" class="action-pill-btn" title="Add Custom Radio URL">+ Station</button>
+                    <button id="btn-close-favorites" class="close-drawer-btn">✕ Close</button>
+                </div>
             </div>
-            <div class="favorites-grid" id="favorites-grid">
-                <!-- Dynamically populated favorites cards -->
-                <p class="lyrics-notice">Loading your Sonos favorites...</p>
+
+            <!-- Horizontal Swipable Carousel Area -->
+            <div class="favorites-carousel-viewport" id="favorites-carousel-viewport">
+                <button id="btn-fav-prev" class="fav-carousel-arrow fav-arrow-prev" title="Previous Page">◀</button>
+                
+                <div class="favorites-carousel-track" id="favorites-carousel-track">
+                    <!-- Populated dynamically with .favorites-page items (6 cards per page) -->
+                    <div class="search-initial-placeholder">
+                        <span class="placeholder-icon">⭐</span>
+                        <p class="placeholder-text">Loading your Sonos favorites and playlists...</p>
+                    </div>
+                </div>
+
+                <button id="btn-fav-next" class="fav-carousel-arrow fav-arrow-next" title="Next Page">▶</button>
+            </div>
+
+            <!-- Footer Pagination / Page Dots Bar -->
+            <div class="favorites-pagination-bar" id="favorites-pagination-bar">
+                <button id="btn-fav-page-prev" class="fav-page-btn">◀ Prev</button>
+                <div class="fav-page-dots" id="fav-page-dots">
+                    <!-- Page dots rendered dynamically -->
+                </div>
+                <span class="fav-page-indicator" id="fav-page-indicator">Page 1 / 1</span>
+                <button id="btn-fav-page-next" class="fav-page-btn">Next ▶</button>
             </div>
         </div>
 
@@ -326,6 +357,37 @@
                             <span class="power-card-sub">Safely power off</span>
                         </div>
                     </button>
+                    <button id="btn-power-update" class="power-card power-card-update">
+                        <span class="power-card-icon">📥</span>
+                        <div class="power-card-info">
+                            <span class="power-card-title">Check for Updates</span>
+                            <span class="power-card-sub">Pull latest git updates & reload</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Custom Radio Station / Favorite Modal -->
+        <div class="modal-overlay" id="add-favorite-modal">
+            <div class="modal-card" style="width: 520px; max-width: 90%;">
+                <div class="modal-header">
+                    <h2>⭐ Add Radio Station / Favorite</h2>
+                    <button id="btn-close-add-fav" class="close-drawer-btn">✕</button>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 14px;">
+                    <div>
+                        <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; display: block;">Station / Playlist Name</label>
+                        <input type="text" id="input-fav-title" class="search-input" placeholder="e.g. Sveriges Radio P3, Radio Paradise" style="padding: 10px 14px;">
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; display: block;">Stream URL or Audio URI</label>
+                        <input type="text" id="input-fav-uri" class="search-input" placeholder="e.g. http://stream.radioparadise.com/mp3-128" style="padding: 10px 14px;">
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 8px;">
+                        <button id="btn-submit-add-fav" class="action-pill-btn" style="flex: 1; padding: 12px; font-size: 13px; background: var(--accent); color: #0b1120; font-weight: 800; border: none; border-radius: 12px; cursor: pointer;">Save to Sonos Favorites</button>
+                        <button id="btn-cancel-add-fav" class="close-drawer-btn" style="padding: 12px 18px;">Cancel</button>
+                    </div>
                 </div>
             </div>
         </div>

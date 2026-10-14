@@ -429,38 +429,366 @@ if (btnUngroupAll) {
     });
 }
 
-// 8. Sonos Radio & Favorites Drawer
-document.getElementById("btn-favorites-toggle").addEventListener("click", async () => {
-    favoritesDrawer.classList.add("open");
+// 8. Sonos Radio, Favorites & Playlists Carousel Drawer
+const btnFavoritesToggle = document.getElementById("btn-favorites-toggle");
+const btnCloseFavorites = document.getElementById("btn-close-favorites");
+const favoritesCarouselTrack = document.getElementById("favorites-carousel-track");
+const btnFavPrev = document.getElementById("btn-fav-prev");
+const btnFavNext = document.getElementById("btn-fav-next");
+const btnFavPagePrev = document.getElementById("btn-fav-page-prev");
+const btnFavPageNext = document.getElementById("btn-fav-page-next");
+const favPageDots = document.getElementById("fav-page-dots");
+const favPageIndicator = document.getElementById("fav-page-indicator");
+const btnFavAddCurrent = document.getElementById("btn-fav-add-current");
+const btnFavAddCustom = document.getElementById("btn-fav-add-custom");
+
+// Add Favorite Modal elements
+const addFavoriteModal = document.getElementById("add-favorite-modal");
+const btnCloseAddFav = document.getElementById("btn-close-add-fav");
+const btnCancelAddFav = document.getElementById("btn-cancel-add-fav");
+const btnSubmitAddFav = document.getElementById("btn-submit-add-fav");
+const inputFavTitle = document.getElementById("input-fav-title");
+const inputFavUri = document.getElementById("input-fav-uri");
+
+let allFavorites = [];
+let currentFavFilter = "all";
+let currentFavPage = 0;
+let totalFavPages = 1;
+const FAVS_PER_PAGE = 6; // 3 columns x 2 rows = 6 items per page (tailored for 800x480)
+
+async function loadFavorites() {
+    if (!favoritesCarouselTrack) return;
+    favoritesCarouselTrack.innerHTML = `
+        <div class="search-initial-placeholder" style="width:100%;">
+            <span class="placeholder-icon">⭐</span>
+            <p class="placeholder-text">Loading your Sonos favorites and playlists...</p>
+        </div>
+    `;
     try {
         const res = await fetch("/api/favorites");
+        if (!res.ok) throw new Error("Failed to fetch favorites");
         const data = await res.json();
-        favoritesGrid.innerHTML = "";
-        if (!data.favorites || data.favorites.length === 0) {
-            favoritesGrid.innerHTML = "<p class='lyrics-notice'>No Sonos favorites found.</p>";
-            return;
-        }
-        data.favorites.forEach(fav => {
+        allFavorites = data.favorites || [];
+        currentFavPage = 0;
+        renderFavoritesCarousel();
+    } catch (e) {
+        console.error("Error loading favorites:", e);
+        favoritesCarouselTrack.innerHTML = `
+            <div class="search-initial-placeholder" style="width:100%;">
+                <span class="placeholder-icon">⚠️</span>
+                <p class="placeholder-text">Could not load Sonos favorites. Check network connection.</p>
+            </div>
+        `;
+    }
+}
+
+function getFilteredFavorites() {
+    if (currentFavFilter === "all") return allFavorites;
+    if (currentFavFilter === "radio") {
+        return allFavorites.filter(f => f.type === "radio");
+    }
+    if (currentFavFilter === "playlist") {
+        return allFavorites.filter(f => f.type === "playlist");
+    }
+    if (currentFavFilter === "favorite") {
+        return allFavorites.filter(f => f.type === "favorite");
+    }
+    return allFavorites;
+}
+
+function renderFavoritesCarousel() {
+    if (!favoritesCarouselTrack) return;
+    const items = getFilteredFavorites();
+    totalFavPages = Math.max(1, Math.ceil(items.length / FAVS_PER_PAGE));
+    currentFavPage = Math.min(currentFavPage, totalFavPages - 1);
+    currentFavPage = Math.max(0, currentFavPage);
+
+    favoritesCarouselTrack.innerHTML = "";
+
+    if (items.length === 0) {
+        favoritesCarouselTrack.innerHTML = `
+            <div class="search-initial-placeholder" style="width:100%;">
+                <span class="placeholder-icon">⭐</span>
+                <p class="placeholder-text">No favorites found in this category. Tap "⭐ + Current" to save what's playing!</p>
+            </div>
+        `;
+        updateFavPaginationUI(0, 1);
+        return;
+    }
+
+    // Build pages
+    for (let p = 0; p < totalFavPages; p++) {
+        const pageEl = document.createElement("div");
+        pageEl.className = "favorites-page";
+        pageEl.id = `fav-page-${p}`;
+
+        const pageItems = items.slice(p * FAVS_PER_PAGE, (p + 1) * FAVS_PER_PAGE);
+        pageItems.forEach(fav => {
             const card = document.createElement("div");
             card.className = "favorite-card";
+
+            let iconFallback = "⭐";
+            let typeLabel = "Sonos Favorite";
+            if (fav.type === "radio") {
+                iconFallback = "📻";
+                typeLabel = "Radio Station";
+            } else if (fav.type === "playlist") {
+                iconFallback = "🎵";
+                typeLabel = "Playlist";
+            }
+
+            const artHtml = fav.art
+                ? `<img class="fav-art" src="${escapeHtml(fav.art)}" onerror="this.outerHTML='<div class=\\'fav-icon-fallback\\'>${iconFallback}</div>'">`
+                : `<div class="fav-icon-fallback">${iconFallback}</div>`;
+
+            const deleteBtnHtml = fav.can_delete
+                ? `<button class="btn-fav-delete" title="Delete Favorite" data-id="${escapeHtml(fav.id)}">✕</button>`
+                : ``;
+
             card.innerHTML = `
-                <img class="fav-art" src="${fav.art || ''}" onerror="this.style.display='none'">
-                <div class="fav-title">${fav.title}</div>
+                ${artHtml}
+                <div class="fav-info">
+                    <div class="fav-title" title="${escapeHtml(fav.title)}">${escapeHtml(fav.title)}</div>
+                    <span class="fav-type-badge">${iconFallback} ${typeLabel}</span>
+                </div>
+                ${deleteBtnHtml}
             `;
-            card.addEventListener("click", () => {
-                postAction("/api/favorite/play", { uri: fav.uri, meta: fav.meta });
-                favoritesDrawer.classList.remove("open");
+
+            // Play on card tap (unless delete button was tapped)
+            card.addEventListener("click", async (e) => {
+                if (e.target.closest(".btn-fav-delete")) return;
+                card.style.transform = "scale(0.95)";
+                await postAction("/api/favorite/play", {
+                    uri: fav.uri,
+                    meta: fav.meta,
+                    is_container: fav.is_container,
+                    id: fav.id
+                });
+                setTimeout(() => {
+                    card.style.transform = "";
+                    favoritesDrawer.classList.remove("open");
+                }, 300);
             });
-            favoritesGrid.appendChild(card);
+
+            // Delete favorite
+            const deleteBtn = card.querySelector(".btn-fav-delete");
+            if (deleteBtn) {
+                deleteBtn.addEventListener("click", async (e) => {
+                    e.stopPropagation();
+                    if (confirm(`Remove "${fav.title}" from Sonos Favorites?`)) {
+                        deleteBtn.disabled = true;
+                        deleteBtn.textContent = "...";
+                        await postAction("/api/favorites/delete", { id: fav.id });
+                        await loadFavorites();
+                    }
+                });
+            }
+
+            pageEl.appendChild(card);
         });
-    } catch (e) {
-        favoritesGrid.innerHTML = "<p class='lyrics-notice'>Error loading favorites.</p>";
+
+        favoritesCarouselTrack.appendChild(pageEl);
     }
+
+    updateFavPaginationUI(currentFavPage, totalFavPages);
+    scrollToFavPage(currentFavPage, false);
+}
+
+function updateFavPaginationUI(page, total) {
+    if (favPageIndicator) {
+        favPageIndicator.textContent = `Page ${page + 1} / ${total}`;
+    }
+    if (btnFavPrev) btnFavPrev.disabled = (page <= 0);
+    if (btnFavNext) btnFavNext.disabled = (page >= total - 1);
+    if (btnFavPagePrev) btnFavPagePrev.disabled = (page <= 0);
+    if (btnFavPageNext) btnFavPageNext.disabled = (page >= total - 1);
+
+    if (favPageDots) {
+        favPageDots.innerHTML = "";
+        for (let i = 0; i < total; i++) {
+            const dot = document.createElement("div");
+            dot.className = `fav-dot ${i === page ? 'active' : ''}`;
+            dot.addEventListener("click", () => goToFavPage(i));
+            favPageDots.appendChild(dot);
+        }
+    }
+}
+
+function scrollToFavPage(pageIndex, smooth = true) {
+    if (!favoritesCarouselTrack) return;
+    const pageEl = document.getElementById(`fav-page-${pageIndex}`);
+    if (pageEl) {
+        pageEl.scrollIntoView({ behavior: smooth ? "smooth" : "auto", inline: "start", block: "nearest" });
+    } else {
+        const targetX = pageIndex * favoritesCarouselTrack.clientWidth;
+        favoritesCarouselTrack.scrollTo({ left: targetX, behavior: smooth ? "smooth" : "auto" });
+    }
+}
+
+function goToFavPage(pageIndex) {
+    if (pageIndex < 0 || pageIndex >= totalFavPages) return;
+    currentFavPage = pageIndex;
+    updateFavPaginationUI(currentFavPage, totalFavPages);
+    scrollToFavPage(currentFavPage, true);
+}
+
+// Touch Swiping Gestures on Track
+let favTouchStartX = 0;
+let favTouchStartY = 0;
+let isFavSwiping = false;
+
+if (favoritesCarouselTrack) {
+    favoritesCarouselTrack.addEventListener("touchstart", (e) => {
+        if (!e.touches || e.touches.length === 0) return;
+        favTouchStartX = e.touches[0].clientX;
+        favTouchStartY = e.touches[0].clientY;
+        isFavSwiping = true;
+    }, { passive: true });
+
+    favoritesCarouselTrack.addEventListener("touchend", (e) => {
+        if (!isFavSwiping || !e.changedTouches || e.changedTouches.length === 0) return;
+        isFavSwiping = false;
+        const diffX = e.changedTouches[0].clientX - favTouchStartX;
+        const diffY = e.changedTouches[0].clientY - favTouchStartY;
+        // Detect horizontal swipe
+        if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
+            if (diffX < 0) {
+                // Swiped left -> next page
+                goToFavPage(currentFavPage + 1);
+            } else {
+                // Swiped right -> prev page
+                goToFavPage(currentFavPage - 1);
+            }
+        }
+    }, { passive: true });
+
+    // Track native scroll to update active dot
+    let favScrollDebounce = null;
+    favoritesCarouselTrack.addEventListener("scroll", () => {
+        clearTimeout(favScrollDebounce);
+        favScrollDebounce = setTimeout(() => {
+            const width = favoritesCarouselTrack.clientWidth;
+            if (width > 0) {
+                const detectedPage = Math.round(favoritesCarouselTrack.scrollLeft / width);
+                if (detectedPage !== currentFavPage && detectedPage >= 0 && detectedPage < totalFavPages) {
+                    currentFavPage = detectedPage;
+                    updateFavPaginationUI(currentFavPage, totalFavPages);
+                }
+            }
+        }, 80);
+    }, { passive: true });
+}
+
+// Arrow and page buttons
+if (btnFavPrev) btnFavPrev.addEventListener("click", () => goToFavPage(currentFavPage - 1));
+if (btnFavNext) btnFavNext.addEventListener("click", () => goToFavPage(currentFavPage + 1));
+if (btnFavPagePrev) btnFavPagePrev.addEventListener("click", () => goToFavPage(currentFavPage - 1));
+if (btnFavPageNext) btnFavPageNext.addEventListener("click", () => goToFavPage(currentFavPage + 1));
+
+// Filter tab clicks
+document.querySelectorAll(".fav-tab-pill").forEach(pill => {
+    pill.addEventListener("click", () => {
+        document.querySelectorAll(".fav-tab-pill").forEach(p => p.classList.remove("active"));
+        pill.classList.add("active");
+        currentFavFilter = pill.dataset.tab || "all";
+        currentFavPage = 0;
+        renderFavoritesCarousel();
+    });
 });
 
-document.getElementById("btn-close-favorites").addEventListener("click", () => {
-    favoritesDrawer.classList.remove("open");
-});
+// Open / Close favorites drawer
+if (btnFavoritesToggle) {
+    btnFavoritesToggle.addEventListener("click", () => {
+        favoritesDrawer.classList.add("open");
+        loadFavorites();
+    });
+}
+
+if (btnCloseFavorites) {
+    btnCloseFavorites.addEventListener("click", () => {
+        favoritesDrawer.classList.remove("open");
+    });
+}
+
+// Add Current Track/Station to Favorites
+if (btnFavAddCurrent) {
+    btnFavAddCurrent.addEventListener("click", async () => {
+        btnFavAddCurrent.textContent = "⭐ Saving...";
+        try {
+            const res = await fetch("/api/favorites/add_current", { method: "POST" });
+            const data = await res.json();
+            if (data.success) {
+                btnFavAddCurrent.textContent = "Saved ⭐";
+                await loadFavorites();
+                goToFavPage(totalFavPages - 1);
+            } else {
+                alert(data.error || "Could not save to favorites.");
+                btnFavAddCurrent.textContent = "⭐ + Current";
+            }
+        } catch (e) {
+            btnFavAddCurrent.textContent = "⭐ + Current";
+        }
+        setTimeout(() => {
+            btnFavAddCurrent.textContent = "⭐ + Current";
+        }, 1500);
+    });
+}
+
+// Add Custom Radio Station Modal
+if (btnFavAddCustom) {
+    btnFavAddCustom.addEventListener("click", () => {
+        if (addFavoriteModal) {
+            if (inputFavTitle) inputFavTitle.value = "";
+            if (inputFavUri) inputFavUri.value = "";
+            addFavoriteModal.classList.add("open");
+        }
+    });
+}
+
+if (btnCloseAddFav) {
+    btnCloseAddFav.addEventListener("click", () => {
+        if (addFavoriteModal) addFavoriteModal.classList.remove("open");
+    });
+}
+
+if (btnCancelAddFav) {
+    btnCancelAddFav.addEventListener("click", () => {
+        if (addFavoriteModal) addFavoriteModal.classList.remove("open");
+    });
+}
+
+if (btnSubmitAddFav) {
+    btnSubmitAddFav.addEventListener("click", async () => {
+        const title = inputFavTitle ? inputFavTitle.value.trim() : "";
+        const uri = inputFavUri ? inputFavUri.value.trim() : "";
+        if (!title || !uri) {
+            alert("Please enter both a station name and a stream URL.");
+            return;
+        }
+        btnSubmitAddFav.textContent = "Saving...";
+        btnSubmitAddFav.disabled = true;
+        try {
+            const res = await fetch("/api/favorites/add", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title, uri })
+            });
+            const data = await res.json();
+            if (data.success) {
+                if (addFavoriteModal) addFavoriteModal.classList.remove("open");
+                await loadFavorites();
+                goToFavPage(totalFavPages - 1);
+            } else {
+                alert("Failed to save to Sonos Favorites.");
+            }
+        } catch (e) {
+            alert("Error saving favorite.");
+        } finally {
+            btnSubmitAddFav.textContent = "Save to Sonos Favorites";
+            btnSubmitAddFav.disabled = false;
+        }
+    });
+}
 
 // 9. Synchronized Lyrics Drawer
 document.getElementById("btn-lyrics-toggle").addEventListener("click", () => {
@@ -580,6 +908,10 @@ document.getElementById("btn-power-reboot")?.addEventListener("click", () => {
 
 document.getElementById("btn-power-shutdown")?.addEventListener("click", () => {
     handleSystemAction("/api/system/shutdown", "Safely shut down the Raspberry Pi?", "🛑", "Shutting Down...", "Safe to unplug power when screen turns off.");
+});
+
+document.getElementById("btn-power-update")?.addEventListener("click", () => {
+    handleSystemAction("/api/update/trigger", "Check for and apply updates from your Git repository now?", "📥", "Updating Sonos Touchscreen...", "Checking remote Git repository, pulling updates, and restarting the controller.");
 });
 
 // 12. Music Search Drawer & Touch Virtual Keyboard
@@ -840,6 +1172,7 @@ function renderSearchResults(data, query) {
                 <div class="track-result-actions">
                     <button class="btn-item-play">▶ Play</button>
                     <button class="btn-item-queue">+ Queue</button>
+                    <button class="btn-item-fav" title="Save to Favorites">⭐ Fav</button>
                 </div>
             `;
             const playBtn = item.querySelector(".btn-item-play");
@@ -854,6 +1187,19 @@ function renderSearchResults(data, query) {
                 queueBtn.textContent = "Queued ✓";
                 await postAction("/api/queue/item", { uri: trk.uri, meta: trk.meta, is_container: false, item_id: trk.id });
                 setTimeout(() => { queueBtn.textContent = "+ Queue"; }, 1200);
+            });
+
+            const favBtn = item.querySelector(".btn-item-fav");
+            favBtn?.addEventListener("click", async () => {
+                favBtn.textContent = "Saving...";
+                await postAction("/api/favorites/add", {
+                    title: trk.title + (trk.artist ? ` – ${trk.artist}` : ""),
+                    uri: trk.uri,
+                    meta: trk.meta,
+                    art: trk.art
+                });
+                favBtn.textContent = "Saved ⭐";
+                setTimeout(() => { favBtn.textContent = "⭐ Fav"; }, 1200);
             });
 
             list.appendChild(item);
@@ -958,6 +1304,7 @@ function renderDrilldownItems(items) {
                 <div class="track-result-actions">
                     <button class="btn-item-play">▶ Play</button>
                     <button class="btn-item-queue">+ Queue</button>
+                    <button class="btn-item-fav" title="Save to Favorites">⭐ Fav</button>
                 </div>
             `;
             const playBtn = el.querySelector(".btn-item-play");
@@ -972,6 +1319,19 @@ function renderDrilldownItems(items) {
                 queueBtn.textContent = "Queued ✓";
                 await postAction("/api/queue/item", { uri: item.uri, meta: item.meta, is_container: false, item_id: item.id });
                 setTimeout(() => { queueBtn.textContent = "+ Queue"; }, 1200);
+            });
+
+            const favBtn = el.querySelector(".btn-item-fav");
+            favBtn?.addEventListener("click", async () => {
+                favBtn.textContent = "Saving...";
+                await postAction("/api/favorites/add", {
+                    title: item.title + (item.artist ? ` – ${item.artist}` : ""),
+                    uri: item.uri,
+                    meta: item.meta,
+                    art: item.art
+                });
+                favBtn.textContent = "Saved ⭐";
+                setTimeout(() => { favBtn.textContent = "⭐ Fav"; }, 1200);
             });
 
             drilldownItems.appendChild(el);

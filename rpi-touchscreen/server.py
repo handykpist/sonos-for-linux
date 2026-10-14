@@ -15,7 +15,7 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler, ThreadingHTTPServe
 from sonos_device import SonosDeviceController
 from lyrics import fetch_lyrics
 
-PORT = 5000
+PORT = int(os.environ.get("PORT", 5000))
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 
 def get_local_ip():
@@ -51,7 +51,7 @@ class TouchscreenHandler(SimpleHTTPRequestHandler):
             elif path == "/app.js":
                 self.serve_file(os.path.join(STATIC_DIR, "app.js"), "application/javascript; charset=utf-8")
                 return
-            elif path == "/api/status":
+            elif path in ("/api/status", "/api/state"):
                 st = self.server.controller.get_state()
                 self.send_json(st)
                 return
@@ -180,11 +180,33 @@ class TouchscreenHandler(SimpleHTTPRequestHandler):
                 self.server.controller.seek(pos)
                 self.send_json({"success": True, "position": pos})
                 return
-            elif path == "/api/favorite/play":
+            elif path in ("/api/favorite/play", "/api/favorites/play"):
                 uri = payload.get("uri", "")
                 meta = payload.get("meta", "")
-                self.server.controller.play_uri(uri, meta)
+                is_container = bool(payload.get("is_container", False))
+                item_id = payload.get("id", "")
+                if is_container:
+                    self.server.controller.play_item(uri, meta, True, item_id)
+                else:
+                    self.server.controller.play_uri(uri, meta)
                 self.send_json({"success": True})
+                return
+            elif path == "/api/favorites/add":
+                title = payload.get("title", "").strip()
+                uri = payload.get("uri", "").strip()
+                meta = payload.get("meta", "")
+                art = payload.get("art", "")
+                success = self.server.controller.add_favorite(title, uri, meta, art)
+                self.send_json({"success": success})
+                return
+            elif path == "/api/favorites/add_current":
+                res = self.server.controller.add_current_to_favorites()
+                self.send_json(res)
+                return
+            elif path == "/api/favorites/delete":
+                obj_id = payload.get("id", "")
+                success = self.server.controller.delete_favorite(obj_id)
+                self.send_json({"success": success})
                 return
             elif path == "/api/group/join":
                 room = payload.get("room", "")

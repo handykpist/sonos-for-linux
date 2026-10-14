@@ -478,26 +478,125 @@ body.touch-screen {
     transform: scale(1.04);
 }
 
-/* Favorites Grid */
-.favorites-grid {
+/* ========================================================
+   FAVORITES & RADIO CAROUSEL (SWIPABLE 800x480 TOUCH FIT)
+   ======================================================== */
+.fav-filter-tabs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.fav-filter-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.fav-tab-pill {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #cbd5e1;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+}
+
+.fav-tab-pill.active {
+    background: var(--gold);
+    color: #0b1120;
+    border-color: var(--gold);
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+}
+
+.favorites-carousel-viewport {
     flex: 1;
-    overflow-y: auto;
+    display: flex;
+    align-items: center;
+    position: relative;
+    min-height: 0;
+    width: 100%;
+    gap: 6px;
+}
+
+.fav-carousel-arrow {
+    width: 36px;
+    height: 90px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    color: #fff;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 5;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+}
+
+.fav-carousel-arrow:active {
+    transform: scale(0.92);
+    background: rgba(56, 189, 248, 0.3);
+    border-color: var(--accent);
+}
+
+.fav-carousel-arrow:disabled {
+    opacity: 0.2;
+    pointer-events: none;
+}
+
+.favorites-carousel-track {
+    flex: 1;
+    display: flex;
+    height: 100%;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    touch-action: pan-y pinch-zoom;
+}
+
+.favorites-carousel-track::-webkit-scrollbar {
+    display: none;
+}
+
+.favorites-page {
+    flex: 0 0 100%;
+    width: 100%;
+    height: 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
-    padding: 10px 0;
+    grid-template-rows: repeat(2, 1fr);
+    gap: 10px;
+    padding: 4px;
+    box-sizing: border-box;
 }
 
 .favorite-card {
     background: var(--card-bg);
     border: 1px solid var(--border);
     border-radius: 14px;
-    padding: 12px;
+    padding: 10px 12px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     cursor: pointer;
+    position: relative;
     transition: all 0.15s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
 }
 
 .favorite-card:active {
@@ -508,17 +607,134 @@ body.touch-screen {
 .fav-art {
     width: 48px;
     height: 48px;
-    border-radius: 8px;
+    border-radius: 10px;
     object-fit: cover;
     background: #1e293b;
+    flex-shrink: 0;
+}
+
+.fav-icon-fallback {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+}
+
+.fav-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .fav-title {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
+    color: #f8fafc;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.fav-type-badge {
+    font-size: 10px;
+    color: var(--gold);
+    font-weight: 700;
+    margin-top: 3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-fav-delete {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.btn-fav-delete:hover,
+.btn-fav-delete:active {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.2);
+}
+
+/* Pagination Footer Bar */
+.favorites-pagination-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+}
+
+.fav-page-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.fav-page-btn:active {
+    transform: scale(0.95);
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.fav-page-btn:disabled {
+    opacity: 0.25;
+    pointer-events: none;
+}
+
+.fav-page-dots {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 360px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 4px 0;
+}
+
+.fav-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.fav-dot.active {
+    width: 20px;
+    border-radius: 4px;
+    background: var(--gold);
+}
+
+.fav-page-indicator {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
 }
 
 /* Room Modal */
@@ -933,6 +1149,18 @@ body.touch-screen {
 .power-card-shutdown:active {
     background: rgba(239, 68, 68, 0.15);
     border-color: #ef4444;
+}
+
+.power-card-update {
+    grid-column: span 2;
+    background: rgba(34, 197, 94, 0.08);
+    border-color: rgba(34, 197, 94, 0.25);
+}
+
+.power-card-update:hover,
+.power-card-update:active {
+    background: rgba(34, 197, 94, 0.2);
+    border-color: #22c55e;
 }
 
 .power-card-icon {
@@ -1438,6 +1666,23 @@ body.touch-screen {
 
 .btn-item-queue:active {
     transform: scale(0.93);
+}
+
+.btn-item-fav {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    color: var(--gold);
+    padding: 5px 9px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+.btn-item-fav:active {
+    transform: scale(0.93);
+    background: rgba(245, 158, 11, 0.3);
 }
 
 /* Search Drilldown Container */

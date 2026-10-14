@@ -133,7 +133,7 @@ class SonosDeviceController:
             pass
         return ""
 
-    def _soap_call(self, ip: str, endpoint: str, service: str, action: str, args: str = "") -> str:
+    def _soap_call(self, ip: str, endpoint: str, service: str, action: str, args: str = "", timeout: float = 3.5) -> str:
         if not ip:
             return ""
         body = f'''<?xml version="1.0" encoding="utf-8"?>
@@ -151,7 +151,7 @@ class SonosDeviceController:
         }
         req = urllib.request.Request(f"http://{ip}:1400{endpoint}", data=body.encode("utf-8"), headers=headers)
         try:
-            with urllib.request.urlopen(req, timeout=2.0) as resp:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
                 return resp.read().decode("utf-8", errors="ignore")
         except Exception:
             return ""
@@ -227,38 +227,201 @@ class SonosDeviceController:
         return False
 
     def get_favorites(self):
-        """Retrieves household Sonos Favorites / Radio Stations."""
+        """Retrieves household Sonos Favorites, Radio Stations, and Saved Playlists."""
         ip = self.active_ip or (list(self.speakers.values())[0] if self.speakers else "")
         if not ip:
             return []
         
-        args = '<ObjectID>FV:2</ObjectID><BrowseFlag>BrowseDirectChildren</BrowseFlag><Filter>*</Filter><StartingIndex>0</StartingIndex><RequestedCount>30</RequestedCount><SortCriteria></SortCriteria>'
-        res = self._soap_call(ip, "/MediaServer/ContentDirectory/Control", "ContentDirectory", "Browse", args)
         favorites = []
-        if "<Result>" in res:
-            inner_xml = html.unescape(res.split("<Result>")[1].split("</Result>")[0])
+        seen_titles = set()
+
+        # 1. Sonos Favorites & Radio (FV:2)
+        args_fav = '<ObjectID>FV:2</ObjectID><BrowseFlag>BrowseDirectChildren</BrowseFlag><Filter>*</Filter><StartingIndex>0</StartingIndex><RequestedCount>150</RequestedCount><SortCriteria></SortCriteria>'
+        res_fav = self._soap_call(ip, "/MediaServer/ContentDirectory/Control", "ContentDirectory", "Browse", args_fav, timeout=5.0)
+        if "<Result>" in res_fav:
             try:
+                inner_xml = html.unescape(res_fav.split("<Result>")[1].split("</Result>")[0])
                 root = ET.fromstring(f"<root>{inner_xml}</root>")
                 for item in root.findall(".//{urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/}item"):
-                    title_elem = item.find("{http://purl.org/dc/elements/1.1/}title")
-                    title = title_elem.text if title_elem is not None else "Favorite"
-                    art_elem = item.find("{urn:schemas-upnp-org:metadata-1-0/upnp/}albumArtURI")
-                    art = art_elem.text if art_elem is not None else ""
-                    if art and art.startswith("/"):
-                        art = f"http://{ip}:1400{art}"
-                    res_elem = item.find("{urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/}res")
-                    uri = res_elem.text if res_elem is not None else ""
-                    meta_elem = item.find("{urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/}r:resMD")
-                    meta = meta_elem.text if meta_elem is not None else ""
-                    favorites.append({
-                        "title": title,
-                        "art": art,
-                        "uri": uri,
-                        "meta": meta
-                    })
+                    try:
+                        item_id = item.attrib.get("id", "")
+                        title_elem = item.find("{http://purl.org/dc/elements/1.1/}title")
+                        title = (title_elem.text or "").strip() if title_elem is not None and title_elem.text else "Favorite"
+                        
+                        art_elem = item.find("{urn:schemas-upnp-org:metadata-1-0/upnp/}albumArtURI")
+                        art = (art_elem.text or "").strip() if art_elem is not None and art_elem.text else ""
+                        if art and art.startswith("/"):
+                            art = f"http://{ip}:1400{art}"
+                            
+                        res_elem = item.find("{urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/}res")
+                        uri = (res_elem.text or "").strip() if res_elem is not None and res_elem.text else ""
+                        
+                        meta_elem = item.find("{urn:schemas-rinconnetworks-com:metadata-1-0/}resMD")
+                        if meta_elem is None:
+                            meta_elem = item.find("{urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/}r:resMD")
+                        meta = (meta_elem.text or "").strip() if meta_elem is not None and meta_elem.text else ""
+                        
+                        desc_elem = item.find("{urn:schemas-rinconnetworks-com:metadata-1-0/}description")
+                        desc = (desc_elem.text or "").strip() if desc_elem is not None and desc_elem.text else ""
+
+                        # If art is missing from parent, inspect meta
+                        if not art and meta:
+                            try:
+                                m_root = ET.fromstring(html.unescape(meta) if not meta.startswith("<") else meta)
+                                m_art = m_root.find(".//{urn:schemas-upnp-org:metadata-1-0/upnp/}albumArtURI")
+                                if m_art is not None and m_art.text:
+                                    art = m_art.text.strip()
+                                    if art.startswith("/"):
+                                        art = f"http://{ip}:1400{art}"
+                            except Exception:
+                                pass
+
+                        # If uri is missing, inspect meta for inner item ID
+                        if not uri and meta:
+                            try:
+                                m_root = ET.fromstring(html.unescape(meta) if not meta.startswith("<") else meta)
+                                m_item = m_root.find(".//{urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/}item")
+                                if m_item is not None:
+                                    inner_id = m_item.attrib.get("id", "")
+                                    if inner_id:
+                                        uri = f"x-rincon-cpcontainer:{inner_id}"
+                            except Exception:
+                                pass
+
+                        # Classify type
+                        u_low = uri.lower()
+                        t_low = title.lower()
+                        d_low = desc.lower()
+                        item_type = "favorite"
+                        if "radio" in u_low or "radio" in t_low or "tunein" in u_low or "radio" in d_low or "radioprogram" in d_low or "podcast" in t_low:
+                            item_type = "radio"
+                        elif "playlist" in d_low or "playlist" in u_low or "album" in d_low:
+                            item_type = "playlist"
+
+                        is_container = uri.startswith("x-rincon-cpcontainer:") or "<upnp:class>object.container" in meta
+
+                        seen_titles.add(title.strip().lower())
+                        favorites.append({
+                            "id": item_id,
+                            "title": title,
+                            "art": art,
+                            "uri": uri,
+                            "meta": meta,
+                            "type": item_type,
+                            "is_container": is_container,
+                            "can_delete": True
+                        })
+                    except Exception:
+                        continue
             except Exception:
                 pass
+
+        # 2. Sonos Playlists / Saved Queues (SQ:)
+        args_sq = '<ObjectID>SQ:</ObjectID><BrowseFlag>BrowseDirectChildren</BrowseFlag><Filter>*</Filter><StartingIndex>0</StartingIndex><RequestedCount>50</RequestedCount><SortCriteria></SortCriteria>'
+        res_sq = self._soap_call(ip, "/MediaServer/ContentDirectory/Control", "ContentDirectory", "Browse", args_sq, timeout=4.0)
+        if "<Result>" in res_sq:
+            try:
+                inner_xml = html.unescape(res_sq.split("<Result>")[1].split("</Result>")[0])
+                root = ET.fromstring(f"<root>{inner_xml}</root>")
+                for item in root.findall(".//*[@id]"):
+                    try:
+                        item_id = item.attrib.get("id", "")
+                        title_elem = item.find("{http://purl.org/dc/elements/1.1/}title")
+                        title = (title_elem.text or "").strip() if title_elem is not None and title_elem.text else "Playlist"
+                        if title.strip().lower() in seen_titles:
+                            continue
+                        res_elem = item.find("{urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/}res")
+                        uri = (res_elem.text or "").strip() if res_elem is not None and res_elem.text else ""
+                        favorites.append({
+                            "id": item_id,
+                            "title": title,
+                            "art": "",
+                            "uri": uri,
+                            "meta": "",
+                            "type": "playlist",
+                            "is_container": True,
+                            "can_delete": False
+                        })
+                    except Exception:
+                        continue
+            except Exception:
+                pass
+
         return favorites
+
+    def add_favorite(self, title: str, uri: str, meta: str = "", art: str = "") -> bool:
+        """Creates a new favorite item in Sonos FV:2."""
+        ip = self.active_ip or (list(self.speakers.values())[0] if self.speakers else "")
+        if not ip or not title or not uri:
+            return False
+
+        art_tag = f"<upnp:albumArtURI>{html.escape(art)}</upnp:albumArtURI>" if art else ""
+        meta_tag = f"<r:resMD>{html.escape(meta)}</r:resMD>" if meta else ""
+
+        if uri.startswith("x-sonosapi-radio:") or uri.startswith("x-rincon-mp3radio:") or uri.startswith("http:") or uri.startswith("https:"):
+            protocol = "http-get:*:audio/mpeg:*"
+            upnp_class = "object.item.sonos-favorite"
+        elif uri.startswith("x-rincon-cpcontainer:"):
+            protocol = "x-rincon-cpcontainer:*:*:*"
+            upnp_class = "object.item.sonos-favorite"
+        else:
+            protocol = "*:*:*:*"
+            upnp_class = "object.item.sonos-favorite"
+
+        didl = (
+            '<DIDL-Lite xmlns:dc="http://purl.org/dc/elements/1.1/" '
+            'xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" '
+            'xmlns:r="urn:schemas-rinconnetworks-com:metadata-1-0/" '
+            'xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/">'
+            f'<item id="" parentID="FV:2" restricted="true">'
+            f'<dc:title>{html.escape(title)}</dc:title>'
+            f'<upnp:class>{upnp_class}</upnp:class>'
+            f'<res protocolInfo="{protocol}">{html.escape(uri)}</res>'
+            f'{art_tag}'
+            f'{meta_tag}'
+            f'</item></DIDL-Lite>'
+        )
+        args = f'<ContainerID>FV:2</ContainerID><Elements>{html.escape(didl)}</Elements>'
+        res = self._soap_call(ip, "/MediaServer/ContentDirectory/Control", "ContentDirectory", "CreateObject", args)
+        return "<ObjectID>" in res
+
+    def add_current_to_favorites(self) -> dict:
+        """Adds the currently playing track, radio station, or stream to Sonos Favorites."""
+        ip = self.active_ip
+        if not ip:
+            return {"success": False, "error": "No active speaker"}
+
+        st = self.get_state()
+        title = st.get("title", "")
+        artist = st.get("artist", "")
+        fav_title = f"{title} – {artist}" if (artist and artist not in title) else title
+        if not fav_title:
+            return {"success": False, "error": "Nothing currently playing"}
+
+        art = st.get("albumArt", "")
+        
+        pos_xml = self._soap_call(ip, "/MediaRenderer/AVTransport/Control", "AVTransport", "GetPositionInfo")
+        track_uri = pos_xml.split("<TrackURI>")[1].split("</TrackURI>")[0] if "<TrackURI>" in pos_xml else ""
+        track_meta = pos_xml.split("<TrackMetaData>")[1].split("</TrackMetaData>")[0] if "<TrackMetaData>" in pos_xml else ""
+
+        if not track_uri:
+            media_xml = self._soap_call(ip, "/MediaRenderer/AVTransport/Control", "AVTransport", "GetMediaInfo")
+            track_uri = media_xml.split("<CurrentURI>")[1].split("</CurrentURI>")[0] if "<CurrentURI>" in media_xml else ""
+            track_meta = media_xml.split("<CurrentURIMetaData>")[1].split("</CurrentURIMetaData>")[0] if "<CurrentURIMetaData>" in media_xml else ""
+
+        if not track_uri:
+            return {"success": False, "error": "Could not determine playing stream URI"}
+
+        success = self.add_favorite(fav_title, track_uri, track_meta, art)
+        return {"success": success, "title": fav_title}
+
+    def delete_favorite(self, object_id: str) -> bool:
+        """Deletes a favorite from Sonos FV:2."""
+        ip = self.active_ip or (list(self.speakers.values())[0] if self.speakers else "")
+        if not ip or not object_id:
+            return False
+        res = self._soap_call(ip, "/MediaServer/ContentDirectory/Control", "ContentDirectory", "DestroyObject", f"<ObjectID>{html.escape(object_id)}</ObjectID>")
+        return "<DestroyObjectResponse" in res
 
     def play_uri(self, uri: str, meta: str = ""):
         ip = self.active_ip
