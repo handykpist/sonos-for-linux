@@ -188,8 +188,8 @@ To close the fullscreen kiosk window and stop the controller from terminal:
 - **Start Controller**: `systemctl --user start sonos-touchscreen.service`
 - **Restart Controller**: `systemctl --user restart sonos-touchscreen.service`
 - **Check Status**: `systemctl --user status sonos-touchscreen.service`
-- **Disable Auto-Start on Boot**: `systemctl --user disable sonos-touchscreen`
-- **View Live Logs**: `journalctl --user -u sonos-touchscreen.service -f`
+- **View Live Kiosk Logs**: `journalctl --user -u sonos-touchscreen.service -f`
+- **View Backend Server Logs**: `tail -f ~/.local/share/sonos-touchscreen/server.log`
 
 ### Safely Shut Down the Raspberry Pi Hardware:
 To cleanly power off the Raspberry Pi without corrupting the SD card:

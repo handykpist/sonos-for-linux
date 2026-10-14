@@ -46,8 +46,11 @@ class SonosDeviceController:
             "muted": False,
             "uri": ""
         }
-        self.discover_speakers()
         self.start()
+
+    def get_state(self):
+        with self.lock:
+            return dict(self._last_state)
 
     def discover_speakers(self):
         """Discovers all Sonos speakers on the local subnet via SSDP and ZoneGroupTopology."""
@@ -255,9 +258,13 @@ class SonosDeviceController:
         return self.play()
 
     def query_state(self):
-        ip = self.active_ip
+        with self.lock:
+            ip = self.active_ip
+            current_room = self.active_room
+            fallback_state = dict(self._last_state)
+
         if not ip:
-            return self._last_state
+            return fallback_state
 
         # 1. Transport State
         trans = self._soap_call(ip, "/MediaRenderer/AVTransport/Control", "AVTransport", "GetTransportInfo")
@@ -294,8 +301,8 @@ class SonosDeviceController:
         muted = self.get_mute()
 
         st = {
-            "room": self.active_room,
-            "ip": self.active_ip,
+            "room": current_room,
+            "ip": ip,
             "state": state,
             "position": rel_time,
             "duration": duration,
@@ -306,7 +313,8 @@ class SonosDeviceController:
             "volume": vol,
             "muted": muted
         }
-        self._last_state = st
+        with self.lock:
+            self._last_state = st
         return st
 
     def start(self):
@@ -315,11 +323,35 @@ class SonosDeviceController:
         t.start()
 
     def _loop(self):
+        last_discovery_time = 0
+        last_auto_follow_time = 0
         while self.running:
+            now = time.time()
+            need_discovery = False
+            with self.lock:
+                if not self.speakers:
+                    if now - last_discovery_time > 3.0:
+                        need_discovery = True
+                else:
+                    if now - last_discovery_time > 60.0:
+                        need_discovery = True
+
+            if need_discovery:
+                last_discovery_time = now
+                try:
+                    self.discover_speakers()
+                except Exception:
+                    pass
+
             try:
-                # If no active room is playing, check if another room started playing
-                cur = self.query_state()
-                if cur.get("state") != "PLAYING" and len(self.speakers) > 1:
+                self.query_state()
+            except Exception:
+                pass
+
+            try:
+                cur = self.get_state()
+                if cur.get("state") != "PLAYING" and (now - last_auto_follow_time > 10.0):
+                    last_auto_follow_time = now
                     with self.lock:
                         spkrs = list(self.speakers.items())
                     for r_name, r_ip in spkrs:
@@ -333,4 +365,5 @@ class SonosDeviceController:
                             break
             except Exception:
                 pass
-            time.sleep(1.0)
+
+            time.sleep(0.8)

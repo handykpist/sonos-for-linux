@@ -61,7 +61,10 @@ function formatTime(secs) {
 }
 
 // 3. State Polling & UI Update
+let isPolling = false;
 async function pollState() {
+    if (isPolling) return;
+    isPolling = true;
     try {
         const res = await fetch("/api/status");
         if (!res.ok) return;
@@ -70,6 +73,8 @@ async function pollState() {
         updateUI(state);
     } catch (e) {
         console.warn("Poll state error:", e);
+    } finally {
+        isPolling = false;
     }
 }
 
@@ -403,6 +408,6 @@ document.getElementById("btn-power-shutdown")?.addEventListener("click", () => {
 });
 
 // Start loop
-setInterval(pollState, 700);
+setInterval(pollState, 800);
 pollState();
 
