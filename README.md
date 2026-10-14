@@ -49,12 +49,21 @@ sonos
 
 ---
 
-## 📱 Raspberry Pi 4 (7" Touchscreen) Controller
+## 📱 Raspberry Pi (7" Touchscreen) Controller
 
-This branch includes a dedicated, 100% native touch controller crafted specifically for the **Raspberry Pi 4** and the **Official Raspberry Pi 7" Touchscreen (800×480)**.
+This branch includes a dedicated, 100% native touch controller crafted specifically for the **Raspberry Pi** (Pi 3B or newer) and the **Official Raspberry Pi 7" Touchscreen (800×480)**.
 
 - **Directory:** [`rpi-touchscreen/`](file:///home/bue/Documents/Projects/Sonos%20for%20Linux/rpi-touchscreen)
-- **Features:** 800×480 pixel-exact layout, large capacitive buttons, now-playing artwork, volume slider, Sonos Favorites / Radio station drawer, synchronized lyrics mode, and auto-boot Kiosk mode.
+- **Features:**
+  - 800×480 pixel-exact touch layout with large touch targets.
+  - Multi-page swipable Radio, Favorites, and Playlists carousel (3×2 grid) with touch gestures and category filtering.
+  - Add & manage Sonos Favorites (`⭐ + Current` 1-tap save, custom station URLs, search-result favoriting).
+  - Music Library search with on-screen virtual touch keyboard (including Swedish keys).
+  - Multi-room speaker grouping (`+ Group`, `✓ Grouped`, `🔊 Everywhere`, individual volume sliders).
+  - High-res artwork with dynamic ambient backlight glow.
+  - Synchronized karaoke lyrics powered by LRCLIB.
+  - Hidden power & system menu (exit to desktop, restart, reboot, shutdown, and 1-tap git updater).
+  - Night / Sleep dimmer mode and auto-boot Kiosk mode.
 - **Quick Setup:**
   ```bash
   cd rpi-touchscreen

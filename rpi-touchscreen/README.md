@@ -52,9 +52,15 @@ Designed to live on your kitchen counter, living room wall, or bedside table as 
   - Animated audio playback waveform.
   - Formatted elapsed / total duration countdowns.
 
-- **Sonos Radio & Favorites**:
-  - Slide-over drawer with all your household Sonos Favorites, Spotify playlists, and TuneIn radio stations.
-  - Tap any station or playlist to begin playback instantly.
+- **Sonos Radio & Favorites (Touch-Swipe Carousel)**:
+  - Slide-over drawer featuring an intuitive, multi-page horizontal swipable carousel (3×2 grid, 6 large cards per page) tailored for 800×480.
+  - Swipe left or right with your finger, or tap the side `<` and `>` arrow buttons and interactive page indicator dots.
+  - Category filter pills: `All`, `📻 Radio`, `🎵 Playlists`, and `⭐ Favorites`.
+  - **1-Tap Save**: Tap `⭐ + Current` to immediately add the currently playing song, stream, or station to Sonos Favorites (`FV:2`).
+  - **Custom Streams**: Tap `+ Station` to add custom radio stream URLs (MP3/AAC/TuneIn) or playlist names.
+  - **Quick Favorite in Search**: Tap `⭐ Fav` on any track or album in search results to save it to your favorites instantly.
+  - **Delete Favorites**: Remove favorites directly from the touch UI with a confirmation prompt.
+  - Full UPnP browse integration retrieving all household favorites, radio stations, and saved queues without clipping or truncation.
 
 - **🎤 Live Synchronized Lyrics Mode**:
   - One-tap drawer featuring synchronized word-by-word / line-by-line karaoke lyrics powered by LRCLIB.
@@ -69,6 +75,7 @@ Designed to live on your kitchen counter, living room wall, or bedside table as 
     - **Restart Sonos App**: Cleanly reload the UI and backend service.
     - **Reboot Raspberry Pi**: Safely reboot the hardware.
     - **Shut Down Device**: Safely power off the Raspberry Pi.
+    - **Check for Updates**: Pull latest commits from GitHub and restart the controller with 1 tap right from the screen.
 
 - **100% Native ARM64 & ARMhf**:
   - Built with pure Python standard library and lightweight web standards.
@@ -150,8 +157,16 @@ Tap the **🔍 Search** button in the top-right header:
 - **Step Buttons**: Tap `-` or `+` on either side of the slider for precise 2% incremental steps.
 - **Mute**: Tap the speaker icon to toggle mute on or off.
 
-### 5. Sonos Favorites & Radio
-Tap the **⭐ Radio** button in the top-right header to slide out your saved Sonos Favorites, Spotify playlists, and TuneIn radio stations. Tap any card to begin playing.
+### 5. Sonos Favorites & Radio (Swipable Carousel & Adding Favorites)
+Tap the **⭐ Radio** button in the top-right header to open the Favorites drawer:
+- **Touch-First Swiping**: Swipe left or right on the screen to smoothly browse through multiple pages of favorites and radio stations.
+- **Carousel Controls**: Tap the side `<` and `>` arrows or tap any page dot in the bottom pagination bar to jump directly between pages.
+- **Category Filter Tabs**: Tap `All`, `📻 Radio`, `🎵 Playlists`, or `⭐ Favorites` to filter your collection instantly.
+- **1-Tap Play**: Tap any card to begin playing that station, playlist, or track immediately.
+- **Save Current Song/Station**: Tap `⭐ + Current` in the drawer header to save whatever is currently playing to your Sonos Favorites.
+- **Add Custom Station**: Tap `+ Station` to open the input modal, enter a station name and stream URL (MP3/AAC/TuneIn), and save it.
+- **Favorite from Search**: When searching in the Music Search drawer, tap `⭐ Fav` next to any track or album to save it to Favorites.
+- **Remove a Favorite**: Tap the small `✕` icon on any favorite card to delete it with a confirmation check.
 
 ### 6. Synchronized Lyrics
 Tap the **🎤 Lyrics** button in the header. If timestamped lyrics exist for the current track, they will scroll in real time with the active singing line illuminated.
@@ -162,9 +177,11 @@ Tap the **🌙** moon icon in the header. The screen enters a minimal, ultra-low
 ### 8. Hidden Power & Exit Menu (Bottom-Left Corner)
 To avoid accidental taps while keeping the UI clean, a subtle, hidden touch hot-corner is positioned at the **bottom-left corner** (`⏻`).
 - Tap the bottom-left corner to open the **Power & System** menu.
-- Choose **Exit to Desktop** to close Chromium kiosk mode.
-- Choose **Restart Sonos App** to reload backend services.
-- Choose **Reboot** or **Shut Down** to safely manage the Raspberry Pi hardware.
+- **Exit to Desktop**: Close Chromium kiosk mode and return to desktop.
+- **Restart Sonos App**: Cleanly reload backend services and UI.
+- **Reboot Raspberry Pi**: Safely restart the hardware.
+- **Shut Down Device**: Safely power down the hardware.
+- **Check for Updates**: Positioned right beneath the Shutdown button, tap to immediately fetch the latest code from GitHub, apply updates, and reload without needing SSH.
 
 ---
 
