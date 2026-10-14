@@ -70,6 +70,18 @@ The installer will:
 1. Verify system packages (`python3`, `chromium-browser`, `unclutter`).
 2. Deploy the touchscreen application to `~/.local/share/sonos-touchscreen`.
 3. Configure the systemd user service `sonos-touchscreen.service` to boot automatically into fullscreen Kiosk mode on startup.
+4. Set up the `sonos-touchscreen-update.timer` to check for updates every night at 01:00 AM.
+
+### 🔄 Updating an Existing Installation
+
+If you already have `sonos-rpi-touchscreen` cloned and running on your Raspberry Pi:
+
+```bash
+cd ~/sonos-rpi-touchscreen
+git pull
+./install.sh
+```
+*(Running `./install.sh` refreshes all application files and ensures all systemd services and timers are active).*
 
 ---
 
@@ -106,13 +118,28 @@ sudo ~/.local/share/sonos-touchscreen/kiosk/setup_screen.sh brightness 180
 
 ---
 
-## 🔧 Service Management
+## 🔧 Service Management & Shutdown
 
+### Stop or Exit the Touchscreen App:
+To close the fullscreen kiosk window and stop the controller:
+```bash
+systemctl --user stop sonos-touchscreen
+pkill -f "server.py"
+```
+
+### Other Service Controls:
 - **Start Controller**: `systemctl --user start sonos-touchscreen.service`
-- **Stop Controller**: `systemctl --user stop sonos-touchscreen.service`
 - **Restart Controller**: `systemctl --user restart sonos-touchscreen.service`
 - **Check Status**: `systemctl --user status sonos-touchscreen.service`
+- **Disable Auto-Start on Boot**: `systemctl --user disable sonos-touchscreen`
 - **View Live Logs**: `journalctl --user -u sonos-touchscreen.service -f`
+
+### Safely Shut Down the Raspberry Pi Hardware:
+To cleanly power off the Raspberry Pi without corrupting the SD card:
+```bash
+sudo shutdown -h now
+```
+*(or `sudo poweroff`)*
 
 ---
 
