@@ -4,6 +4,22 @@ A dedicated, standalone touch controller for your household **Sonos** sound syst
 
 Designed to live on your kitchen counter, living room wall, or bedside table as an instant, always-on smart home music hub.
 
+![Sonos Touchscreen Player](docs/screenshots/main_player.png)
+
+---
+
+## 📸 Interface & Feature Tour
+
+| **Now Playing & Playback Controls** | **Power & System Menu (Bottom-Left)** |
+|:---:|:---:|
+| ![Main Player](docs/screenshots/main_player.png) | ![Power & System Menu](docs/screenshots/power_system_menu.png) |
+| *High-res artwork, tactile transport buttons & volume slider* | *Hidden hot-corner for Desktop exit, reboot & safe shutdown* |
+
+| **Sonos Favorites & Radio** | **Live Synchronized Lyrics** |
+|:---:|:---:|
+| ![Favorites Drawer](docs/screenshots/favorites_drawer.png) | ![Lyrics Mode](docs/screenshots/lyrics_mode.png) |
+| *1-tap access to TuneIn radio, playlists & stations* | *Word-by-word / line-by-line real-time lyrics (LRCLIB)* |
+
 ---
 
 ## 🌟 Key Features
@@ -12,6 +28,7 @@ Designed to live on your kitchen counter, living room wall, or bedside table as 
   - Pixel-exact UI layout designed specifically for the official 7" Raspberry Pi Touch Display.
   - Large capacitive touch targets (58px–76px) for effortless, tap-and-go control without needing a mouse or keyboard.
   - Zero scrollbars or cluttered desktop frames in full-screen Kiosk mode.
+  - Chromium launched with `--password-store=basic` and `--use-mock-keychain` to eliminate OS keyring popups.
 
 - **Full Sonos System Control**:
   - **Auto-Discovery**: Dynamically discovers all Sonos speakers across your home via UPnP/SSDP with zero hardcoded IPs or names.
@@ -92,6 +109,39 @@ git pull
 
 ---
 
+## 📖 Touch Controls & Usage Guidelines
+
+### 1. Switching Sonos Rooms
+Tap the **Room Pill** button in the top-left corner (`Living Room ▼`). A modal overlay opens displaying all discovered Sonos speakers in your home. Tap any room to switch control instantly.
+
+### 2. Playback & Scrubbing
+- **Play / Pause**: Tap the large glowing circular center button.
+- **Track Navigation**: Tap **⏮** for previous track or **⏭** for next track.
+- **Seek Scrubbing**: Tap anywhere along the progress track bar to seek forward or backward.
+
+### 3. Volume Control
+- **Slider**: Drag your finger along the volume bar for fluid capacitive volume adjustment.
+- **Step Buttons**: Tap `-` or `+` on either side of the slider for precise 2% incremental steps.
+- **Mute**: Tap the speaker icon to toggle mute on or off.
+
+### 4. Sonos Favorites & Radio
+Tap the **⭐ Radio** button in the top-right header to slide out your saved Sonos Favorites, Spotify playlists, and TuneIn radio stations. Tap any card to begin playing.
+
+### 5. Synchronized Lyrics
+Tap the **🎤 Lyrics** button in the header. If timestamped lyrics exist for the current track, they will scroll in real time with the active singing line illuminated.
+
+### 6. Night / Sleep Dimmer
+Tap the **🌙** moon icon in the header. The screen enters a minimal, ultra-low power clock and date view. Tap anywhere on the display to wake it up.
+
+### 7. Hidden Power & Exit Menu (Bottom-Left Corner)
+To avoid accidental taps while keeping the UI clean, a subtle, hidden touch hot-corner is positioned at the **bottom-left corner** (`⏻`).
+- Tap the bottom-left corner to open the **Power & System** menu.
+- Choose **Exit to Desktop** to close Chromium kiosk mode.
+- Choose **Restart Sonos App** to reload backend services.
+- Choose **Reboot** or **Shut Down** to safely manage the Raspberry Pi hardware.
+
+---
+
 ## 🔄 Screen Rotation (Upside-Down Display Fix)
 
 Many popular 3D-printed cases and desktop stands for the official 7" display mount the screen upside down (so the power cables exit at the top or side).
@@ -128,11 +178,11 @@ sudo ~/.local/share/sonos-touchscreen/kiosk/setup_screen.sh brightness 180
 ## 🔧 Service Management & Shutdown
 
 ### Stop or Exit the Touchscreen App:
-To close the fullscreen kiosk window and stop the controller:
+To close the fullscreen kiosk window and stop the controller from terminal:
 ```bash
-systemctl --user stop sonos-touchscreen
-pkill -f "server.py"
+~/.local/share/sonos-touchscreen/kiosk/exit_kiosk.sh
 ```
+*(Or run `systemctl --user stop sonos-touchscreen && pkill -f "server.py"`)*
 
 ### Other Service Controls:
 - **Start Controller**: `systemctl --user start sonos-touchscreen.service`
