@@ -30,12 +30,22 @@ Designed to live on your kitchen counter, living room wall, or bedside table as 
   - Zero scrollbars or cluttered desktop frames in full-screen Kiosk mode.
   - Chromium launched with `--password-store=basic` and `--use-mock-keychain` to eliminate OS keyring popups.
 
-- **Full Sonos System Control**:
+- **Full Sonos System Control & Speaker Grouping**:
   - **Auto-Discovery**: Dynamically discovers all Sonos speakers across your home via UPnP/SSDP with zero hardcoded IPs or names.
-  - **Multi-Room Selector**: Easily switch between rooms (Living Room, Kitchen, Bedroom, Move, Roam) with one touch.
+  - **Speaker Grouping**: Join or separate any speaker with 1-tap (`+ Group` / `✓ Grouped`) to sync playback across multiple rooms.
+  - **Quick Party Modes**: One-tap **🔊 Everywhere** groups all speakers simultaneously; **Separate** unlinks them.
+  - **Per-Speaker Volume**: Adjust individual speaker volumes or mute specific rooms directly from the grouping modal.
   - **Playback Transport**: Big, tactile Play, Pause, Next Track, and Previous Track buttons.
   - **Touch Volume Control**: Capacitive touch volume slider with instant tactile step buttons (`-` and `+`) and 1-tap Mute.
   - **Scrubbing Seek Bar**: Tap anywhere on the progress track to jump forward or backward in the track.
+
+- **🔍 Music Search & Touch Virtual Keyboard**:
+  - Instant search across your local music library, NAS shares, and Sonos Favorites.
+  - Search by artist, song/track title, or album.
+  - Category filters: `All`, `🎤 Artists`, `🎵 Songs`, `💿 Albums`, and `⭐ Favorites`.
+  - Built-in on-screen touch keyboard (QWERTY + numbers + Swedish Å, Ä, Ö keys) for typing directly on the 800×480 touchscreen without a physical keyboard.
+  - Artist & album drilldown: browse an artist's full discography or an album's complete tracklist.
+  - Play immediately (`▶ Play`), add to Sonos queue (`+ Queue`), or play all tracks (`▶ Play All`).
 
 - **Now Playing Artwork & Visualizer**:
   - High-resolution album artwork with real-time dynamic ambient backlight glow.
@@ -111,29 +121,45 @@ git pull
 
 ## 📖 Touch Controls & Usage Guidelines
 
-### 1. Switching Sonos Rooms
-Tap the **Room Pill** button in the top-left corner (`Living Room ▼`). A modal overlay opens displaying all discovered Sonos speakers in your home. Tap any room to switch control instantly.
+### 1. Speaker Grouping & Multi-Room Control
+Tap the **Room Pill** button in the top-left corner (`Living Room ▼`). The **Speakers & Grouping** modal opens:
+- **Group / Ungroup**: Tap `+ Group` next to any speaker to join it into synchronous playback with the host speaker. Tap `✓ Grouped` to separate it.
+- **🔊 Everywhere**: Tap the quick action button to immediately link every Sonos speaker in your house into party mode.
+- **Separate**: Tap to unlink all speakers into individual standalone rooms.
+- **Per-Speaker Volume & Mute**: Adjust each speaker's volume slider or mute state independently.
+- **Control Active Room**: Tap `Control` on any room to switch primary playback control to that speaker.
 
-### 2. Playback & Scrubbing
+### 2. Music Search & Virtual Keyboard
+Tap the **🔍 Search** button in the top-right header:
+- **Instant Search**: Type an artist, song/track title, or album name. Search queries execute live.
+- **On-Screen Keyboard**: A customized 4-row touch keyboard with numbers, QWERTY letters, and Swedish characters (**Å**, **Ä**, **Ö**) lets you search without a physical keyboard. Tap `⌨️ Keys` or `▼ Hide` to collapse it and expand results.
+- **Filter Tabs**: Filter by `All`, `🎤 Artists`, `🎵 Songs`, `💿 Albums`, or `⭐ Favorites`.
+- **Drilldown**: Tap any artist to view their full albums and track catalog. Tap an album to view its tracklist.
+- **Playback Actions**:
+  - Tap **▶ Play** on any track to start playback immediately.
+  - Tap **+ Queue** to append the track to the current Sonos playback queue.
+  - Tap **▶ Play All** inside an artist or album view to play the entire selection.
+
+### 3. Playback & Scrubbing
 - **Play / Pause**: Tap the large glowing circular center button.
 - **Track Navigation**: Tap **⏮** for previous track or **⏭** for next track.
 - **Seek Scrubbing**: Tap anywhere along the progress track bar to seek forward or backward.
 
-### 3. Volume Control
+### 4. Volume Control
 - **Slider**: Drag your finger along the volume bar for fluid capacitive volume adjustment.
 - **Step Buttons**: Tap `-` or `+` on either side of the slider for precise 2% incremental steps.
 - **Mute**: Tap the speaker icon to toggle mute on or off.
 
-### 4. Sonos Favorites & Radio
+### 5. Sonos Favorites & Radio
 Tap the **⭐ Radio** button in the top-right header to slide out your saved Sonos Favorites, Spotify playlists, and TuneIn radio stations. Tap any card to begin playing.
 
-### 5. Synchronized Lyrics
+### 6. Synchronized Lyrics
 Tap the **🎤 Lyrics** button in the header. If timestamped lyrics exist for the current track, they will scroll in real time with the active singing line illuminated.
 
-### 6. Night / Sleep Dimmer
+### 7. Night / Sleep Dimmer
 Tap the **🌙** moon icon in the header. The screen enters a minimal, ultra-low power clock and date view. Tap anywhere on the display to wake it up.
 
-### 7. Hidden Power & Exit Menu (Bottom-Left Corner)
+### 8. Hidden Power & Exit Menu (Bottom-Left Corner)
 To avoid accidental taps while keeping the UI clean, a subtle, hidden touch hot-corner is positioned at the **bottom-left corner** (`⏻`).
 - Tap the bottom-left corner to open the **Power & System** menu.
 - Choose **Exit to Desktop** to close Chromium kiosk mode.

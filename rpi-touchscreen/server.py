@@ -9,6 +9,7 @@ import sys
 import json
 import socket
 import urllib.request
+import urllib.parse
 from http.server import HTTPServer, SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 from sonos_device import SonosDeviceController
@@ -38,6 +39,8 @@ class TouchscreenHandler(SimpleHTTPRequestHandler):
         try:
             url_parts = self.path.split("?")
             path = url_parts[0]
+            query_str = url_parts[1] if len(url_parts) > 1 else ""
+            query_params = urllib.parse.parse_qs(query_str) if query_str else {}
             
             if path in ("/", "/index.html"):
                 self.serve_file(os.path.join(STATIC_DIR, "index.html"), "text/html; charset=utf-8")
@@ -56,6 +59,21 @@ class TouchscreenHandler(SimpleHTTPRequestHandler):
                 speakers = self.server.controller.get_speakers_list()
                 active = self.server.controller.active_room
                 self.send_json({"speakers": speakers, "active": active})
+                return
+            elif path == "/api/groups":
+                topo = self.server.controller.get_topology()
+                self.send_json(topo)
+                return
+            elif path == "/api/search":
+                q = query_params.get("q", [""])[0]
+                category = query_params.get("category", ["all"])[0]
+                results = self.server.controller.search_music(q, category)
+                self.send_json(results)
+                return
+            elif path == "/api/browse":
+                container_id = query_params.get("id", [""])[0]
+                items = self.server.controller.browse_container(container_id)
+                self.send_json({"items": items})
                 return
             elif path == "/api/favorites":
                 favs = self.server.controller.get_favorites()
@@ -167,6 +185,54 @@ class TouchscreenHandler(SimpleHTTPRequestHandler):
                 meta = payload.get("meta", "")
                 self.server.controller.play_uri(uri, meta)
                 self.send_json({"success": True})
+                return
+            elif path == "/api/group/join":
+                room = payload.get("room", "")
+                coord = payload.get("coordinator", None)
+                success = self.server.controller.group_speaker(room, coord)
+                self.send_json({"success": success})
+                return
+            elif path == "/api/group/leave":
+                room = payload.get("room", "")
+                success = self.server.controller.ungroup_speaker(room)
+                self.send_json({"success": success})
+                return
+            elif path == "/api/group/all":
+                coord = payload.get("coordinator", None)
+                success = self.server.controller.group_all(coord)
+                self.send_json({"success": success})
+                return
+            elif path == "/api/group/ungroup_all":
+                success = self.server.controller.ungroup_all()
+                self.send_json({"success": success})
+                return
+            elif path == "/api/room/volume":
+                room = payload.get("room", "")
+                vol = int(payload.get("volume", 0))
+                self.server.controller.set_room_volume(room, vol)
+                self.send_json({"success": True, "room": room, "volume": vol})
+                return
+            elif path == "/api/room/mute":
+                room = payload.get("room", "")
+                muted = bool(payload.get("muted", False))
+                self.server.controller.set_room_mute(room, muted)
+                self.send_json({"success": True, "room": room, "muted": muted})
+                return
+            elif path == "/api/play/item":
+                uri = payload.get("uri", "")
+                meta = payload.get("meta", "")
+                is_container = bool(payload.get("is_container", False))
+                item_id = payload.get("item_id", "")
+                success = self.server.controller.play_item(uri, meta, is_container, item_id)
+                self.send_json({"success": success})
+                return
+            elif path == "/api/queue/item":
+                uri = payload.get("uri", "")
+                meta = payload.get("meta", "")
+                is_container = bool(payload.get("is_container", False))
+                item_id = payload.get("item_id", "")
+                success = self.server.controller.queue_item(uri, meta, is_container, item_id)
+                self.send_json({"success": success})
                 return
             elif path == "/api/update/trigger":
                 import subprocess

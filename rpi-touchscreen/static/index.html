@@ -30,6 +30,10 @@
             </div>
 
             <div class="header-right">
+                <button id="btn-search-toggle" class="header-icon-btn" title="Search Artists & Songs">
+                    <span class="icon">🔍</span>
+                    <span class="btn-text">Search</span>
+                </button>
                 <button id="btn-lyrics-toggle" class="header-icon-btn" title="Toggle Synchronized Lyrics">
                     <span class="icon">🎤</span>
                     <span class="btn-text">Lyrics</span>
@@ -146,12 +150,132 @@
             </div>
         </div>
 
-        <!-- Room Selector Modal -->
+        <!-- Slide-Over Drawer: Music Search (Artists & Songs) -->
+        <div class="search-drawer" id="search-drawer">
+            <div class="drawer-header">
+                <div class="drawer-title">
+                    <span>🔍 Search Music</span>
+                </div>
+                <div class="search-categories">
+                    <button class="cat-pill active" data-cat="all">All</button>
+                    <button class="cat-pill" data-cat="artists">🎤 Artists</button>
+                    <button class="cat-pill" data-cat="songs">🎵 Songs</button>
+                    <button class="cat-pill" data-cat="albums">💿 Albums</button>
+                    <button class="cat-pill" data-cat="favorites">⭐ Favorites</button>
+                </div>
+                <div class="drawer-header-actions">
+                    <button id="btn-toggle-keyboard" class="action-pill-btn" title="Toggle On-Screen Keyboard">⌨️ Keys</button>
+                    <button id="btn-close-search" class="close-drawer-btn">✕ Close</button>
+                </div>
+            </div>
+
+            <!-- Search Input Bar -->
+            <div class="search-bar-row">
+                <div class="search-input-wrapper">
+                    <span class="search-icon-inside">🔍</span>
+                    <input type="text" id="search-input" class="search-input" placeholder="Search artist, song, or album..." autocomplete="off" autocapitalize="off" spellcheck="false">
+                    <button id="btn-clear-search" class="search-clear-btn" style="display: none;">✕</button>
+                </div>
+                <button id="btn-exec-search" class="search-action-btn">Search</button>
+            </div>
+
+            <!-- Virtual Touch Keyboard (Collapsible) -->
+            <div class="virtual-keyboard" id="virtual-keyboard">
+                <div class="kb-row">
+                    <button class="kb-key" data-key="1">1</button>
+                    <button class="kb-key" data-key="2">2</button>
+                    <button class="kb-key" data-key="3">3</button>
+                    <button class="kb-key" data-key="4">4</button>
+                    <button class="kb-key" data-key="5">5</button>
+                    <button class="kb-key" data-key="6">6</button>
+                    <button class="kb-key" data-key="7">7</button>
+                    <button class="kb-key" data-key="8">8</button>
+                    <button class="kb-key" data-key="9">9</button>
+                    <button class="kb-key" data-key="0">0</button>
+                </div>
+                <div class="kb-row">
+                    <button class="kb-key" data-key="q">Q</button>
+                    <button class="kb-key" data-key="w">W</button>
+                    <button class="kb-key" data-key="e">E</button>
+                    <button class="kb-key" data-key="r">R</button>
+                    <button class="kb-key" data-key="t">T</button>
+                    <button class="kb-key" data-key="y">Y</button>
+                    <button class="kb-key" data-key="u">U</button>
+                    <button class="kb-key" data-key="i">I</button>
+                    <button class="kb-key" data-key="o">O</button>
+                    <button class="kb-key" data-key="p">P</button>
+                    <button class="kb-key" data-key="å">Å</button>
+                </div>
+                <div class="kb-row">
+                    <button class="kb-key" data-key="a">A</button>
+                    <button class="kb-key" data-key="s">S</button>
+                    <button class="kb-key" data-key="d">D</button>
+                    <button class="kb-key" data-key="f">F</button>
+                    <button class="kb-key" data-key="g">G</button>
+                    <button class="kb-key" data-key="h">H</button>
+                    <button class="kb-key" data-key="j">J</button>
+                    <button class="kb-key" data-key="k">K</button>
+                    <button class="kb-key" data-key="l">L</button>
+                    <button class="kb-key" data-key="ö">Ö</button>
+                    <button class="kb-key" data-key="ä">Ä</button>
+                </div>
+                <div class="kb-row">
+                    <button class="kb-key" data-key="z">Z</button>
+                    <button class="kb-key" data-key="x">X</button>
+                    <button class="kb-key" data-key="c">C</button>
+                    <button class="kb-key" data-key="v">V</button>
+                    <button class="kb-key" data-key="b">B</button>
+                    <button class="kb-key" data-key="n">N</button>
+                    <button class="kb-key" data-key="m">M</button>
+                    <button class="kb-key kb-key-action" data-action="backspace">⌫ Del</button>
+                </div>
+                <div class="kb-row">
+                    <button class="kb-key kb-key-space" data-action="space">Space</button>
+                    <button class="kb-key kb-key-search" data-action="search">🔍 Search</button>
+                    <button class="kb-key kb-key-hide" data-action="hide">▼ Hide</button>
+                </div>
+            </div>
+
+            <!-- Search Results Scroll Box -->
+            <div class="search-results-box" id="search-results-box">
+                <!-- Drilldown Container (browsing artist albums or album tracks) -->
+                <div class="search-drilldown" id="search-drilldown" style="display: none;">
+                    <div class="drilldown-header">
+                        <button id="btn-back-drilldown" class="drilldown-back-btn">← Back</button>
+                        <div class="drilldown-meta">
+                            <h3 id="drilldown-title" class="drilldown-title">Artist Name</h3>
+                            <span id="drilldown-subtitle" class="drilldown-subtitle">Albums & Tracks</span>
+                        </div>
+                        <button id="btn-drilldown-play-all" class="drilldown-play-btn">▶ Play All</button>
+                    </div>
+                    <div class="drilldown-items" id="drilldown-items">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Main Results Container -->
+                <div class="search-results-content" id="search-results-content">
+                    <div class="search-initial-placeholder">
+                        <span class="placeholder-icon">🎵</span>
+                        <p class="placeholder-text">Type an artist, song, or album name to search your Sonos library</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Room Selector & Speaker Grouping Modal -->
         <div class="modal-overlay" id="room-modal">
-            <div class="modal-card">
+            <div class="modal-card room-grouping-card">
                 <div class="modal-header">
-                    <h2>Select Sonos Room</h2>
-                    <button id="btn-close-room-modal" class="close-drawer-btn">✕</button>
+                    <div class="modal-title-box">
+                        <h2>🔊 Speakers & Grouping</h2>
+                        <span class="modal-subtitle">Choose speakers to play in and group together</span>
+                    </div>
+                    <div class="group-quick-actions">
+                        <button id="btn-group-all" class="group-action-btn" title="Play everywhere">🔊 Everywhere</button>
+                        <button id="btn-ungroup-all" class="group-action-btn group-action-ungroup" title="Ungroup all">Separate</button>
+                        <button id="btn-close-room-modal" class="close-drawer-btn">✕</button>
+                    </div>
                 </div>
                 <div class="rooms-list" id="rooms-list">
                     <!-- Populated dynamically -->
