@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Sonos Touchscreen Controller - Installer for Raspberry Pi 4 (800x480)
+# Sonos Touchscreen Controller - Installer for Raspberry Pi (800x480)
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INSTALL_DIR="$HOME/.local/share/sonos-touchscreen"
 
 echo "=========================================================="
-echo "   Sonos Touchscreen Controller - Raspberry Pi 4 Setup    "
+echo "      Sonos Touchscreen Controller - Raspberry Pi Setup   "
 echo "=========================================================="
 
 # 1. Install system prerequisites
@@ -44,7 +44,7 @@ cat << EOF > "$DESKTOP_FILE"
 Type=Application
 Name=Sonos Touchscreen
 GenericName=Sonos 7" Touch Controller
-Comment=Dedicated touch controller for Sonos speakers on Raspberry Pi 4
+Comment=Dedicated touch controller for Sonos speakers on Raspberry Pi
 Exec=$INSTALL_DIR/kiosk/launch_kiosk.sh
 Icon=multimedia-player
 Terminal=false

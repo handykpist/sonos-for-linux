@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sonos Touchscreen Kiosk Launcher for Raspberry Pi 4 (800x480)
+# Sonos Touchscreen Kiosk Launcher for Raspberry Pi (800x480)
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

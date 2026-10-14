@@ -8,7 +8,7 @@ import urllib.request
 import urllib.parse
 import re
 
-USER_AGENT = "SonosTouchscreen/1.0 (Raspberry Pi 4 Touch Controller)"
+USER_AGENT = "SonosTouchscreen/1.0 (Raspberry Pi Touch Controller)"
 
 def clean_track_title(title: str) -> str:
     if not title:

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Sonos Touchscreen Controller Server for Raspberry Pi 4 (800x480).
+Sonos Touchscreen Controller Server for Raspberry Pi (800x480).
 Serves the responsive touch interface and provides REST API for playback, volume, and lyrics.
 """
 
@@ -246,7 +246,7 @@ def run():
     server_address = ("", PORT)
     httpd = TouchscreenServer(server_address, TouchscreenHandler)
     print("=" * 60)
-    print("     Sonos Touchscreen Controller (Raspberry Pi 4)     ")
+    print("      Sonos Touchscreen Controller (Raspberry Pi)      ")
     print(f"     Local Kiosk URL: http://localhost:{PORT}")
     print(f"     Network URL:     http://{LOCAL_IP}:{PORT}")
     print("=" * 60)

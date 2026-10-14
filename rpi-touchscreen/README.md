@@ -1,6 +1,6 @@
-# Sonos Touchscreen Controller for Raspberry Pi 4 (7" Touch Display)
+# Sonos Touchscreen Controller for Raspberry Pi (7" Touch Display)
 
-A dedicated, standalone touch controller for your household **Sonos** sound system, specifically crafted for the **Raspberry Pi 4** and the **Official Raspberry Pi 7" Touchscreen (800×480)**.
+A dedicated, standalone touch controller for your household **Sonos** sound system, specifically crafted for the **Raspberry Pi** and the **Official Raspberry Pi 7" Touchscreen (800×480)**.
 
 Designed to live on your kitchen counter, living room wall, or bedside table as an instant, always-on smart home music hub.
 
@@ -69,16 +69,16 @@ Designed to live on your kitchen counter, living room wall, or bedside table as 
 
 ## 🛠️ Hardware Requirements
 
-1. **Raspberry Pi 4** (1 GB, 2 GB, 4 GB, or 8 GB) or **Raspberry Pi 3 B+ / 5**.
+1. **Raspberry Pi** (Pi 3B or newer).
 2. **Official Raspberry Pi 7" Touchscreen Display** (800×480 DSI) or any 7" HDMI/DSI capacitive display.
-3. MicroSD card with **Raspberry Pi OS** (64-bit Bookworm recommended, Bullseye also supported with Desktop autologin enabled).
-4. Standard 5V / 3A USB-C power supply.
+3. MicroSD card with **Raspberry Pi OS** (Bookworm or Bullseye with Desktop autologin enabled).
+4. Standard 5V USB power supply.
 
 ---
 
 ## 🚀 Quick Installation
 
-On your Raspberry Pi 4 terminal (or via SSH):
+On your Raspberry Pi terminal (or via SSH):
 
 ```bash
 # 1. Clone this repository
