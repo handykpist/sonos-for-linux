@@ -361,37 +361,45 @@ if (btnClosePowerModal) {
     });
 }
 
-function handleSystemAction(endpoint, confirmMsg) {
+function handleSystemAction(endpoint, confirmMsg, actionIcon, actionTitle, actionSub) {
     if (confirmMsg && !confirm(confirmMsg)) return;
 
     if (powerModal) {
         powerModal.querySelector(".modal-card").innerHTML = `
             <div style="text-align:center; padding:36px 12px;">
-                <div style="font-size:42px; margin-bottom:14px;">⏳</div>
-                <h2 style="font-size:22px; font-weight:700;">Executing command...</h2>
-                <p style="color:rgba(255,255,255,0.6); margin-top:8px; font-size:14px;">Please wait while the system responds.</p>
+                <div style="font-size:42px; margin-bottom:14px;">${actionIcon || "⏳"}</div>
+                <h2 style="font-size:22px; font-weight:700;">${actionTitle || "Executing command..."}</h2>
+                <p style="color:rgba(255,255,255,0.6); margin-top:8px; font-size:14px;">${actionSub || "Please wait while the system responds."}</p>
             </div>
         `;
     }
 
     fetch(endpoint, { method: "POST" })
+        .then(res => res.json())
+        .then(data => {
+            if (endpoint === "/api/system/exit") {
+                setTimeout(() => {
+                    try { window.close(); } catch(e) {}
+                }, 400);
+            }
+        })
         .catch(err => console.error("System action error:", err));
 }
 
 document.getElementById("btn-power-exit")?.addEventListener("click", () => {
-    handleSystemAction("/api/system/exit");
+    handleSystemAction("/api/system/exit", null, "🚪", "Exiting to Desktop...", "Closing kiosk window and stopping controller.");
 });
 
 document.getElementById("btn-power-restart")?.addEventListener("click", () => {
-    handleSystemAction("/api/system/restart");
+    handleSystemAction("/api/system/restart", null, "🔄", "Restarting Sonos App...", "Reloading UI and UPnP services.");
 });
 
 document.getElementById("btn-power-reboot")?.addEventListener("click", () => {
-    handleSystemAction("/api/system/reboot", "Reboot the Raspberry Pi?");
+    handleSystemAction("/api/system/reboot", "Reboot the Raspberry Pi?", "⚡", "Rebooting Raspberry Pi...", "System is restarting.");
 });
 
 document.getElementById("btn-power-shutdown")?.addEventListener("click", () => {
-    handleSystemAction("/api/system/shutdown", "Safely shut down the Raspberry Pi?");
+    handleSystemAction("/api/system/shutdown", "Safely shut down the Raspberry Pi?", "🛑", "Shutting Down...", "Safe to unplug power when screen turns off.");
 });
 
 // Start loop

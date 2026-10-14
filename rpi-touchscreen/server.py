@@ -172,11 +172,19 @@ class TouchscreenHandler(SimpleHTTPRequestHandler):
                 self.send_json({"success": False, "error": "Update script not found"}, status=404)
             return
         elif path == "/api/system/exit":
-            import threading, time
+            import subprocess, threading
             def _exit():
-                time.sleep(0.4)
-                os.system("systemctl --user stop sonos-touchscreen 2>/dev/null || pkill -f chromium")
-                os.system("pkill -f 'python3.*server.py' 2>/dev/null || true")
+                import time
+                time.sleep(0.3)
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+                script = os.path.join(base_dir, "kiosk", "exit_kiosk.sh")
+                if os.path.exists(script):
+                    subprocess.run(["bash", script])
+                else:
+                    os.system("systemctl --user stop sonos-touchscreen 2>/dev/null || true")
+                    os.system("killall -9 chromium-browser chromium google-chrome 2>/dev/null || true")
+                    os.system("pkill -9 -f 'chromium.*5000' 2>/dev/null || true")
+                    os.system("pkill -9 -f 'server.py' 2>/dev/null || true")
             threading.Thread(target=_exit, daemon=True).start()
             self.send_json({"success": True, "message": "Exiting kiosk to desktop..."})
             return

@@ -27,6 +27,7 @@ cp -r "$SCRIPT_DIR/kiosk" "$INSTALL_DIR/"
 chmod +x "$INSTALL_DIR/kiosk/launch_kiosk.sh"
 chmod +x "$INSTALL_DIR/kiosk/setup_screen.sh"
 chmod +x "$INSTALL_DIR/kiosk/auto_update.sh"
+chmod +x "$INSTALL_DIR/kiosk/exit_kiosk.sh"
 
 # Save repository location for auto-updater
 REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null || echo "$SCRIPT_DIR/..")"
