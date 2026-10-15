@@ -767,12 +767,12 @@ body.touch-screen {
 }
 
 .modal-card.room-grouping-card {
-    width: 740px;
+    width: 716px;
     max-height: 440px;
     background: #090e17;
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 20px;
-    padding: 16px 20px;
+    padding: 16px 18px;
     display: flex;
     flex-direction: column;
     gap: 12px;

@@ -437,6 +437,15 @@ if (btnCloseRoomModal) {
     });
 }
 
+// Tap on the side / backdrop outside the card to close modal and return to main screen
+if (roomModal) {
+    roomModal.addEventListener("click", (e) => {
+        if (e.target === roomModal && touchMovedDistance <= 10) {
+            roomModal.classList.remove("open");
+        }
+    });
+}
+
 if (btnGroupAll) {
     btnGroupAll.addEventListener("click", async () => {
         btnGroupAll.disabled = true;
@@ -829,6 +838,14 @@ if (btnCancelAddFav) {
     });
 }
 
+if (addFavoriteModal) {
+    addFavoriteModal.addEventListener("click", (e) => {
+        if (e.target === addFavoriteModal) {
+            addFavoriteModal.classList.remove("open");
+        }
+    });
+}
+
 if (btnSubmitAddFav) {
     btnSubmitAddFav.addEventListener("click", async () => {
         const title = inputFavTitle ? inputFavTitle.value.trim() : "";
@@ -972,6 +989,12 @@ function bindPowerModalButtons() {
     document.getElementById("btn-close-power-modal")?.addEventListener("click", () => {
         powerModal.classList.remove("open");
     });
+
+    powerModal.onclick = (e) => {
+        if (e.target === powerModal) {
+            powerModal.classList.remove("open");
+        }
+    };
 
     document.getElementById("btn-power-exit")?.addEventListener("click", () => {
         handleSystemAction("/api/system/exit", null, "🚪", "Exiting to Desktop...", "Closing kiosk window and stopping controller.");
