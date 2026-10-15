@@ -260,13 +260,10 @@ function renderRoomGroups(data) {
     roomsList.innerHTML = "";
     const activeRoom = data.active_room || (currentState ? currentState.room : "");
     const rooms = data.rooms || [];
+    const activeMemberCount = data.active_member_count || (rooms.filter(r => r.is_playing || r.is_grouped).length);
 
     if (roomModalSubtitle) {
-        if (activeRoom) {
-            roomModalSubtitle.innerHTML = `Coordinator: <span class="host-highlight">${activeRoom}</span> • Tap speaker to add/remove`;
-        } else {
-            roomModalSubtitle.textContent = "Tap a speaker to toggle playback in that room";
-        }
+        roomModalSubtitle.textContent = "Tap any speaker to turn on or off • Tap \"Solo\" for 1-room playback";
     }
 
     if (rooms.length === 0) {
@@ -276,30 +273,18 @@ function renderRoomGroups(data) {
 
     rooms.forEach(room => {
         const card = document.createElement("div");
-        const isHost = (room.name === activeRoom);
-        const isGrouped = room.is_grouped;
+        const isPlaying = Boolean(room.is_playing || room.is_grouped || (room.name === activeRoom && activeMemberCount > 0));
 
-        let cardClass = "room-card";
-        let icon = "🔈";
-        let statusText = "Standalone / Off";
-        let pillHtml = "";
+        const cardClass = "room-card " + (isPlaying ? "is-playing" : "is-off");
+        const icon = isPlaying ? "🔊" : "🔈";
 
-        if (isHost) {
-            cardClass += " is-host";
-            icon = "🔊";
-            statusText = "Host (Playing Here)";
-            pillHtml = `<span class="room-toggle-pill pill-host">👑 Host</span>`;
-        } else if (isGrouped) {
-            cardClass += " is-grouped";
-            icon = "🔊";
-            statusText = "Playing in sync";
-            pillHtml = `<span class="room-toggle-pill pill-playing">✓ Playing</span>`;
-        } else {
-            cardClass += " is-separate";
-            icon = "🔈";
-            statusText = "Tap to add to music";
-            pillHtml = `<span class="room-toggle-pill pill-add">+ Add</span>`;
+        let statusText = "Off • Tap to play";
+        if (isPlaying) {
+            statusText = (activeMemberCount > 1) ? "Playing in sync" : "Playing solo";
         }
+
+        const pillClass = isPlaying ? "room-toggle-pill pill-playing" : "room-toggle-pill pill-add";
+        const pillText = isPlaying ? "✓ Playing" : "+ Add";
 
         card.className = cardClass;
         card.innerHTML = `
@@ -311,41 +296,72 @@ function renderRoomGroups(data) {
                 <span class="room-status-text">${statusText}</span>
             </div>
             <div class="room-card-actions">
-                ${pillHtml}
+                <button class="room-solo-btn" data-room="${room.name}" title="Play only in ${room.name}">Solo</button>
+                <span class="${pillClass}">${pillText}</span>
             </div>
         `;
 
-        // Tap on card: toggle grouping (ignore if scrolling)
-        card.addEventListener("click", async () => {
-            if (touchMovedDistance > 10) {
-                return;
-            }
-            if (isHost) {
-                return;
-            }
+        // 1. Solo button handler: Isolates music to this speaker only
+        const soloBtn = card.querySelector(".room-solo-btn");
+        if (soloBtn) {
+            soloBtn.addEventListener("click", async (e) => {
+                e.stopPropagation();
+                if (touchMovedDistance > 10) return;
 
-            // Optimistic UI update for instant touch response
+                soloBtn.disabled = true;
+                soloBtn.textContent = "⏳...";
+
+                // Optimistic UI: highlight this room as playing solo, all others off
+                document.querySelectorAll(".room-card").forEach(c => {
+                    const isTarget = (c === card);
+                    c.className = "room-card " + (isTarget ? "is-playing" : "is-off");
+                    const iconEl = c.querySelector(".room-spk-icon");
+                    if (iconEl) iconEl.textContent = isTarget ? "🔊" : "🔈";
+                    const statusEl = c.querySelector(".room-status-text");
+                    if (statusEl) statusEl.textContent = isTarget ? "Playing solo" : "Off • Tap to play";
+                    const pillEl = c.querySelector(".room-toggle-pill");
+                    if (pillEl) {
+                        pillEl.className = isTarget ? "room-toggle-pill pill-playing" : "room-toggle-pill pill-add";
+                        pillEl.textContent = isTarget ? "✓ Playing" : "+ Add";
+                    }
+                });
+
+                await postAction("/api/group/solo", { room: room.name });
+                setTimeout(loadRoomGroups, 450);
+            });
+        }
+
+        // 2. Card tap handler: Toggles this room ON or OFF in the active group
+        card.addEventListener("click", async () => {
+            if (touchMovedDistance > 10) return;
+
             const pill = card.querySelector(".room-toggle-pill");
             const statusLabel = card.querySelector(".room-status-text");
-            if (isGrouped) {
-                card.className = "room-card is-separate";
+            const spkIcon = card.querySelector(".room-spk-icon");
+
+            if (isPlaying) {
+                // Turning OFF
+                card.className = "room-card is-off";
+                if (spkIcon) spkIcon.textContent = "🔈";
                 if (pill) {
                     pill.className = "room-toggle-pill pill-add";
                     pill.textContent = "⏳ Leaving...";
                 }
-                if (statusLabel) statusLabel.textContent = "Separating...";
+                if (statusLabel) statusLabel.textContent = "Turning off...";
                 await postAction("/api/group/leave", { room: room.name });
             } else {
-                card.className = "room-card is-grouped";
+                // Turning ON
+                card.className = "room-card is-playing";
+                if (spkIcon) spkIcon.textContent = "🔊";
                 if (pill) {
                     pill.className = "room-toggle-pill pill-playing";
-                    pill.textContent = "⏳ Adding...";
+                    pill.textContent = "⏳ Joining...";
                 }
                 if (statusLabel) statusLabel.textContent = "Joining sync...";
                 await postAction("/api/group/join", { room: room.name, coordinator: activeRoom });
             }
 
-            setTimeout(loadRoomGroups, 400);
+            setTimeout(loadRoomGroups, 450);
         });
 
         roomsList.appendChild(card);
@@ -452,8 +468,10 @@ if (btnGroupAll) {
         btnGroupAll.textContent = "Grouping...";
         const activeRoom = currentState ? currentState.room : "";
         // Optimistic UI update across all cards
-        document.querySelectorAll(".room-card:not(.is-host)").forEach(card => {
-            card.className = "room-card is-grouped";
+        document.querySelectorAll(".room-card").forEach(card => {
+            card.className = "room-card is-playing";
+            const iconEl = card.querySelector(".room-spk-icon");
+            if (iconEl) iconEl.textContent = "🔊";
             const pill = card.querySelector(".room-toggle-pill");
             if (pill) {
                 pill.className = "room-toggle-pill pill-playing";
@@ -475,16 +493,21 @@ if (btnUngroupAll) {
     btnUngroupAll.addEventListener("click", async () => {
         btnUngroupAll.disabled = true;
         btnUngroupAll.textContent = "Separating...";
-        // Optimistic UI update across all cards
-        document.querySelectorAll(".room-card:not(.is-host)").forEach(card => {
-            card.className = "room-card is-separate";
+        const activeRoom = currentState ? currentState.room : "";
+        // Optimistic UI update: active room plays solo, other rooms off
+        document.querySelectorAll(".room-card").forEach(card => {
+            const titleEl = card.querySelector(".room-title-text");
+            const isMain = titleEl && (titleEl.textContent === activeRoom);
+            card.className = "room-card " + (isMain ? "is-playing" : "is-off");
+            const iconEl = card.querySelector(".room-spk-icon");
+            if (iconEl) iconEl.textContent = isMain ? "🔊" : "🔈";
             const pill = card.querySelector(".room-toggle-pill");
             if (pill) {
-                pill.className = "room-toggle-pill pill-add";
-                pill.textContent = "+ Add";
+                pill.className = isMain ? "room-toggle-pill pill-playing" : "room-toggle-pill pill-add";
+                pill.textContent = isMain ? "✓ Playing" : "+ Add";
             }
             const status = card.querySelector(".room-status-text");
-            if (status) status.textContent = "Standalone / Off";
+            if (status) status.textContent = isMain ? "Playing solo" : "Off • Tap to play";
         });
         await postAction("/api/group/ungroup_all", {});
         setTimeout(() => {

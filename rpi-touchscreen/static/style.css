@@ -953,24 +953,22 @@ body.touch-screen {
     transform: scale(0.98);
 }
 
-/* Host (Coordinator) Card */
-.room-card.is-host {
-    background: rgba(56, 189, 248, 0.12);
-    border-color: rgba(56, 189, 248, 0.6);
-}
-
-/* Grouped Playing Card */
+/* Active Playing Card */
+.room-card.is-playing,
 .room-card.is-grouped {
-    background: rgba(16, 185, 129, 0.15);
-    border-color: rgba(16, 185, 129, 0.6);
+    background: rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.55);
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.1);
 }
 
-/* Standalone / Idle Card */
+/* Off / Standalone Card */
+.room-card.is-off,
 .room-card.is-separate {
     background: rgba(30, 41, 59, 0.5);
     border-color: rgba(255, 255, 255, 0.08);
 }
 
+.room-card.is-off:hover,
 .room-card.is-separate:hover {
     border-color: rgba(255, 255, 255, 0.2);
 }
@@ -1010,10 +1008,7 @@ body.touch-screen {
     font-weight: 600;
 }
 
-.room-card.is-host .room-status-text {
-    color: var(--accent);
-}
-
+.room-card.is-playing .room-status-text,
 .room-card.is-grouped .room-status-text {
     color: #34d399;
 }
@@ -1026,9 +1021,43 @@ body.touch-screen {
     flex-shrink: 0;
 }
 
+/* 1-Tap Solo Button */
+.room-solo-btn {
+    background: rgba(255, 255, 255, 0.08);
+    color: #94a3b8;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 9px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 48px;
+    height: 32px;
+    box-sizing: border-box;
+}
+
+.room-solo-btn:hover {
+    background: rgba(56, 189, 248, 0.2);
+    color: #38bdf8;
+    border-color: rgba(56, 189, 248, 0.5);
+}
+
+.room-solo-btn:active {
+    transform: scale(0.94);
+    background: rgba(56, 189, 248, 0.3);
+    color: #fff;
+}
+
 .room-toggle-pill {
-    padding: 8px 14px;
-    border-radius: 10px;
+    padding: 6px 12px;
+    border-radius: 9px;
     font-size: 12px;
     font-weight: 800;
     letter-spacing: 0.3px;
@@ -1036,6 +1065,8 @@ body.touch-screen {
     align-items: center;
     gap: 4px;
     pointer-events: none;
+    height: 32px;
+    box-sizing: border-box;
 }
 
 .room-toggle-pill.pill-host {

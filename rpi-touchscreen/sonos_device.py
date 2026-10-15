@@ -648,6 +648,7 @@ class SonosDeviceController:
                 is_active = (name == active_room)
                 is_in_active_group = (name in active_members)
                 is_grouped = (active_member_count > 1) if is_active else is_in_active_group
+                is_playing = is_in_active_group or (is_active and active_member_count > 0)
                 
                 vol = self.get_volume_for_ip(ip) if ip else 0
                 muted = self.get_mute_for_ip(ip) if ip else False
@@ -659,6 +660,7 @@ class SonosDeviceController:
                     "is_active": is_active,
                     "is_coordinator": room_meta.get("is_coordinator", False),
                     "is_grouped": is_grouped,
+                    "is_playing": is_playing,
                     "group_id": room_meta.get("group_id", ""),
                     "volume": vol,
                     "muted": muted
@@ -703,23 +705,146 @@ class SonosDeviceController:
         return success
 
     def ungroup_speaker(self, member_room: str) -> bool:
-        """Ungroups member_room so it becomes a standalone playback zone."""
+        """Ungroups member_room so it leaves group or steps down as coordinator cleanly."""
         with self.lock:
             member_ip = self.speakers.get(member_room, "")
+            active_coord = self.active_room
+            active_members = list(self._active_group_members)
+            speakers_copy = dict(self.speakers)
 
         if not member_ip:
             return False
 
-        res = self._soap_call(member_ip, "/MediaRenderer/AVTransport/Control", "AVTransport", "BecomeCoordinatorOfStandaloneGroup")
-        success = "BecomeCoordinatorOfStandaloneGroupResponse" in res
-        if success:
+        if member_room != active_coord:
+            res = self._soap_call(member_ip, "/MediaRenderer/AVTransport/Control", "AVTransport", "BecomeCoordinatorOfStandaloneGroup")
+            self._soap_call(member_ip, "/MediaRenderer/AVTransport/Control", "AVTransport", "Pause")
+            with self.lock:
+                if member_room in self._active_group_members:
+                    self._active_group_members.remove(member_room)
             threading.Thread(target=self.get_topology, daemon=True).start()
-        return success
+            return True
+
+        # member_room IS the current coordinator!
+        # Step down as coordinator and promote another active member
+        remaining = [m for m in active_members if m != member_room and m in speakers_copy]
+        if remaining:
+            new_coord = remaining[0]
+            new_ip = speakers_copy[new_coord]
+
+            # 1. Promote new_coord to standalone coordinator
+            self._soap_call(new_ip, "/MediaRenderer/AVTransport/Control", "AVTransport", "BecomeCoordinatorOfStandaloneGroup")
+
+            # 2. Get new_coord UUID
+            with self.lock:
+                new_uuid = self._speaker_uuids.get(new_coord, "")
+            if not new_uuid:
+                new_uuid = self._get_speaker_uuid(new_ip)
+                with self.lock:
+                    self._speaker_uuids[new_coord] = new_uuid
+
+            # 3. Regroup any other remaining members to new_coord
+            for other in remaining[1:]:
+                other_ip = speakers_copy.get(other, "")
+                if other_ip and new_uuid:
+                    uri = f"x-rincon:{new_uuid}"
+                    self._soap_call(other_ip, "/MediaRenderer/AVTransport/Control", "AVTransport", "SetAVTransportURI", f"<CurrentURI>{uri}</CurrentURI><CurrentURIMetaData></CurrentURIMetaData>")
+
+            # 4. Stop / Pause old coordinator
+            self._soap_call(member_ip, "/MediaRenderer/AVTransport/Control", "AVTransport", "Pause")
+
+            # 5. Update active controller room to new coordinator
+            with self.lock:
+                self.active_room = new_coord
+                self.active_ip = new_ip
+                self._active_group_members = remaining
+
+            threading.Thread(target=self.get_topology, daemon=True).start()
+            return True
+        else:
+            # Only speaker playing in household, pause playback
+            self.pause()
+            with self.lock:
+                self._active_group_members = []
+            threading.Thread(target=self.get_topology, daemon=True).start()
+            return True
+
+    def solo_speaker(self, room_name: str) -> bool:
+        """Isolates playback to room_name only; separates and pauses all other speakers."""
+        with self.lock:
+            target_ip = self.speakers.get(room_name, "")
+            current_coord = self.active_room
+            current_ip = self.active_ip
+            all_speakers = dict(self.speakers)
+            active_members = list(self._active_group_members)
+
+        if not target_ip:
+            return False
+
+        media_uri = ""
+        media_meta = ""
+        rel_time = ""
+        is_playing = False
+
+        if current_ip and current_ip != target_ip:
+            try:
+                trans_res = self._soap_call(current_ip, "/MediaRenderer/AVTransport/Control", "AVTransport", "GetTransportInfo")
+                if "<CurrentTransportState>PLAYING" in trans_res:
+                    is_playing = True
+
+                media_res = self._soap_call(current_ip, "/MediaRenderer/AVTransport/Control", "AVTransport", "GetMediaInfo")
+                if "<CurrentURI>" in media_res:
+                    media_uri = media_res.split("<CurrentURI>")[1].split("</CurrentURI>")[0]
+                if "<CurrentURIMetaData>" in media_res:
+                    media_meta = media_res.split("<CurrentURIMetaData>")[1].split("</CurrentURIMetaData>")[0]
+
+                pos_res = self._soap_call(current_ip, "/MediaRenderer/AVTransport/Control", "AVTransport", "GetPositionInfo")
+                if "<RelTime>" in pos_res:
+                    rel_time = pos_res.split("<RelTime>")[1].split("</RelTime>")[0]
+            except Exception:
+                pass
+        elif current_ip == target_ip:
+            trans_res = self._soap_call(current_ip, "/MediaRenderer/AVTransport/Control", "AVTransport", "GetTransportInfo")
+            if "<CurrentTransportState>PLAYING" in trans_res:
+                is_playing = True
+
+        # Make target room a standalone coordinator
+        self._soap_call(target_ip, "/MediaRenderer/AVTransport/Control", "AVTransport", "BecomeCoordinatorOfStandaloneGroup")
+
+        # If target wasn't in active group, load URI onto target
+        if room_name not in active_members and media_uri and not media_uri.startswith("x-rincon:"):
+            escaped_meta = html.escape(media_meta)
+            self._soap_call(target_ip, "/MediaRenderer/AVTransport/Control", "AVTransport", "SetAVTransportURI", 
+                            f"<CurrentURI>{html.escape(media_uri)}</CurrentURI><CurrentURIMetaData>{escaped_meta}</CurrentURIMetaData>")
+            if rel_time and rel_time != "0:00:00" and rel_time != "NOT_IMPLEMENTED":
+                self._soap_call(target_ip, "/MediaRenderer/AVTransport/Control", "AVTransport", "Seek",
+                                f"<Unit>REL_TIME</Unit><Target>{rel_time}</Target>")
+
+        if is_playing:
+            self._soap_call(target_ip, "/MediaRenderer/AVTransport/Control", "AVTransport", "Play", "<Speed>1</Speed>")
+
+        # For all other speakers, make standalone and pause
+        for other_name, other_ip in all_speakers.items():
+            if other_name == room_name:
+                continue
+            self._soap_call(other_ip, "/MediaRenderer/AVTransport/Control", "AVTransport", "BecomeCoordinatorOfStandaloneGroup")
+            self._soap_call(other_ip, "/MediaRenderer/AVTransport/Control", "AVTransport", "Pause")
+
+        with self.lock:
+            self.active_room = room_name
+            self.active_ip = target_ip
+            self._active_group_members = [room_name]
+
+        threading.Thread(target=self.get_topology, daemon=True).start()
+        return True
 
     def group_all(self, coordinator_room: str = None) -> bool:
         """Groups all speakers to play together in sync."""
-        coord_name = coordinator_room or self.active_room
         with self.lock:
+            coord_name = coordinator_room or self.active_room
+            if not coord_name and self.speakers:
+                coord_name = list(self.speakers.keys())[0]
+                self.active_room = coord_name
+                self.active_ip = self.speakers[coord_name]
             rooms = [r for r in self.speakers.keys() if r != coord_name]
 
         success = True
@@ -730,12 +855,18 @@ class SonosDeviceController:
         return success
 
     def ungroup_all(self) -> bool:
-        """Separates all speakers into standalone rooms."""
+        """Separates all speakers into standalone rooms, keeping active_room playing."""
         with self.lock:
+            coord_name = self.active_room
             rooms = list(self.speakers.keys())
 
         for r in rooms:
-            self.ungroup_speaker(r)
+            if r != coord_name:
+                self.ungroup_speaker(r)
+
+        with self.lock:
+            self._active_group_members = [coord_name] if coord_name else []
+
         threading.Thread(target=self.get_topology, daemon=True).start()
         return True
 

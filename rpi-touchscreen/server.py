@@ -32,7 +32,7 @@ def get_version_info():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     install_dir = os.path.expanduser("~/.local/share/sonos-touchscreen")
     v_data = {
-        "version": "1.2.0",
+        "version": "1.3.0",
         "name": "Sonos Touchscreen Controller",
         "deployment": "Raspberry Pi Kiosk",
         "target": "Raspberry Pi 7\" Touchscreen (800x480)",
@@ -94,7 +94,7 @@ class TouchscreenHandler(SimpleHTTPRequestHandler):
                 return
             elif path in ("/api/status", "/api/state"):
                 st = self.server.controller.get_state()
-                st["version"] = get_version_info().get("version", "1.2.0")
+                st["version"] = get_version_info().get("version", "1.3.0")
                 self.send_json(st)
                 return
             elif path == "/api/speakers":
@@ -277,6 +277,11 @@ class TouchscreenHandler(SimpleHTTPRequestHandler):
                 room = payload.get("room", "")
                 success = self.server.controller.ungroup_speaker(room)
                 self.send_json({"success": success})
+                return
+            elif path == "/api/group/solo":
+                room = payload.get("room", "")
+                success = self.server.controller.solo_speaker(room)
+                self.send_json({"success": success, "room": room})
                 return
             elif path == "/api/group/all":
                 coord = payload.get("coordinator", None)

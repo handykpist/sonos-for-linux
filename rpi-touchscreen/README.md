@@ -30,18 +30,17 @@ Designed to live on your kitchen counter, living room wall, or bedside table as 
   - Zero scrollbars or cluttered desktop frames in full-screen Kiosk mode.
   - Chromium launched with `--password-store=basic` and `--use-mock-keychain` to eliminate OS keyring popups.
 
-- **Streamlined Multi-Room Grouping (Built for Speed)**:
-  - **All Speakers Always Visible**: Authoritative UPnP `ZoneGroupState` synchronization and disk caching guarantee 100% of household rooms are displayed immediately without omission or SSDP drops.
-  - **1-Tap Room Toggle**: Tapping anywhere on a speaker card instantly toggles that speaker into (`[ ✓ Playing ]` in glowing emerald) or out of (`[ + Add ]` in neutral) the playback group with instant optimistic feedback.
-  - **🔊 Group All**: 1-tap party mode instantly synchronizes music across all Sonos speakers in your home.
-  - **Separate All**: 1-tap solo mode isolates playback back to the host coordinator only.
+- **Streamlined Multi-Room Grouping (Built for Speed & Flexibility)**:
+  - **No Locked "Host" Concept**: All speakers in your home are treated equally with total freedom. No speaker is locked or restricted.
+  - **Choose All, Two or More, or Just One Speaker**:
+    - **All (Party Mode)**: Tap `🔊 Group All` in the header to instantly synchronize music across every speaker in your household.
+    - **Two or More (Custom Mix)**: Tap any speaker card to toggle that room into (`[ ✓ Playing ]` in glowing emerald) or out of (`[ + Add ]`) the active music group.
+    - **Just One Speaker (1-Tap Solo)**: Tap `Solo` on any speaker card to immediately route music exclusively to that room and silence all others with 1 touch.
+  - **Effortless Back & Dismiss**: Tap the sides / backdrop outside the card to instantly dismiss and return to the main player.
   - **1-Tap Scroll Buttons (`▲` and `▼`)**: Tactile header buttons to scroll speaker rows effortlessly for users in a hurry.
   - **Touch & Pointer Drag-to-Scroll**: Fluid drag scrolling with drag-threshold click suppression so dragging a finger never accidentally toggles a speaker.
   - **12px Touch Scrollbar**: Broad, high-contrast cyan scrollbar thumb easily operated by finger on 7" touchscreens.
   - **Compact 2-Column Grid (800×480)**: 54px compact card height fits 4 to 8 speakers comfortably without clipping.
-  - **Playback Transport**: Big, tactile Play, Pause, Next Track, and Previous Track buttons.
-  - **Touch Volume Control**: Capacitive touch volume slider with instant tactile step buttons (`-` and `+`) and 1-tap Mute.
-  - **Scrubbing Seek Bar**: Tap anywhere on the progress track to jump forward or backward in the track.
 
 - **🔍 Music Search & Touch Virtual Keyboard**:
   - Instant search across your local music library, NAS shares, and Sonos Favorites.
@@ -141,16 +140,16 @@ bash install.sh
 
 ### 1. Speaker Grouping & Multi-Room Control
 Tap the **Room Pill** button in the top-left corner (`Mios Rum ▼`). The **Speakers & Grouping** modal opens:
-- **All Speakers Always Visible**: All household rooms are populated and updated dynamically via authoritative UPnP topology state and local disk cache.
-- **1-Tap Card Toggle**: Tap anywhere on a speaker card to instantly toggle it into (**`[ ✓ Playing ]`** in glowing emerald) or out of (**`[ + Add ]`**) the active music group with immediate optimistic visual feedback.
-- **🔊 Group All**: Tap the prominent blue action button to instantly link all speakers in your home to play in sync.
-- **Separate All**: Tap to isolate playback so only the host speaker plays.
-- **Host Coordinator**: The room actively playing and coordinating music is highlighted with a cyan border and `👑 Host` badge.
+- **No Locked "Host" Restrictions**: All speakers in your home are treated equally with total freedom. No speaker is locked or non-clickable.
+- **Choose All (Party Mode)**: Tap **`🔊 Group All`** to synchronize music across all speakers in your home with 1 tap.
+- **Choose Two or More (Custom Mix)**: Tap any speaker card to toggle that room into (**`[ ✓ Playing ]`** in glowing emerald) or out of (**`[ + Add ]`**) the active music group with immediate optimistic visual feedback.
+- **Choose Just One Speaker (1-Tap Solo)**: Tap the **`Solo`** button on any speaker card to isolate music playback exclusively to that room and silence all other speakers in 1 tap.
+- **Tap-on-Side / Backdrop Dismissal**: Tap anywhere outside the modal card or on the sides to close and instantly return to the main player.
 - **Effortless Scrolling (Built for Users in a Hurry)**:
   - **▲ / ▼ Scroll Buttons**: Tap the header arrow buttons to scroll speaker rows up or down instantly.
   - **Touch & Pointer Drag**: Drag your finger anywhere across the grid; smart drag-threshold click suppression ensures you never toggle a speaker by mistake while dragging.
   - **12px Tactile Scrollbar**: High-contrast, wide scrollbar thumb easily grabbed with a finger.
-  - Tap **✕ Done** to close.
+  - Tap **✕ Done** or tap the backdrop to close.
 
 ### 2. Music Search & Virtual Keyboard
 Tap the **🔍 Search** button in the top-right header:
