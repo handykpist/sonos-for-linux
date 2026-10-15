@@ -10,15 +10,15 @@ Designed to live on your kitchen counter, living room wall, or bedside table as 
 
 ## 📸 Interface & Feature Tour
 
-| **Now Playing & Playback Controls** | **Power & System Menu (Bottom-Left)** |
+| **Now Playing & Playback Controls** | **Multi-Room Grouping & Speakers** |
 |:---:|:---:|
-| ![Main Player](docs/screenshots/main_player.png) | ![Power & System Menu](docs/screenshots/power_system_menu.png) |
-| *High-res artwork, tactile transport buttons & volume slider* | *Hidden hot-corner for Desktop exit, reboot & safe shutdown* |
+| ![Main Player](docs/screenshots/main_player.png) | ![Multi-Room Grouping](docs/screenshots/grouping_modal.png) |
+| *High-res artwork, tactile transport buttons & volume slider* | *1-tap grouping & separate for users in a hurry* |
 
-| **Sonos Favorites & Radio** | **Live Synchronized Lyrics** |
+| **Sonos Favorites & Radio** | **Power & System Menu (Bottom-Left)** |
 |:---:|:---:|
-| ![Favorites Drawer](docs/screenshots/favorites_drawer.png) | ![Lyrics Mode](docs/screenshots/lyrics_mode.png) |
-| *1-tap access to TuneIn radio, playlists & stations* | *Word-by-word / line-by-line real-time lyrics (LRCLIB)* |
+| ![Favorites Drawer](docs/screenshots/favorites_drawer.png) | ![Power & System Menu](docs/screenshots/power_system_menu.png) |
+| *1-tap access to TuneIn radio, playlists & stations* | *Hidden hot-corner for Desktop exit, reboot & safe shutdown* |
 
 ---
 
@@ -30,11 +30,13 @@ Designed to live on your kitchen counter, living room wall, or bedside table as 
   - Zero scrollbars or cluttered desktop frames in full-screen Kiosk mode.
   - Chromium launched with `--password-store=basic` and `--use-mock-keychain` to eliminate OS keyring popups.
 
-- **Full Sonos System Control & Speaker Grouping**:
-  - **Auto-Discovery**: Dynamically discovers all Sonos speakers across your home via UPnP/SSDP with zero hardcoded IPs or names.
-  - **Speaker Grouping**: Join or separate any speaker with 1-tap (`+ Group` / `✓ Grouped`) to sync playback across multiple rooms.
-  - **Quick Party Modes**: One-tap **🔊 Everywhere** groups all speakers simultaneously; **Separate** unlinks them.
-  - **Per-Speaker Volume**: Adjust individual speaker volumes or mute specific rooms directly from the grouping modal.
+- **Streamlined Multi-Room Grouping (Built for Speed)**:
+  - **1-Tap Room Toggle**: Tapping anywhere on a speaker card instantly toggles that speaker into (`[ ✓ Playing ]` in glowing emerald) or out of (`[ + Add ]` in neutral) the playback group with instant optimistic feedback.
+  - **🔊 Group All**: 1-tap party mode instantly synchronizes music across all Sonos speakers in your home.
+  - **Separate All**: 1-tap solo mode isolates playback back to the host coordinator only.
+  - **Smooth Touch-Scrolling**: Native touch scrolling (`touch-action: pan-y; -webkit-overflow-scrolling: touch;`) without bulky sliders intercepting finger gestures.
+  - **Wide 2-Column Grid (800×480)**: Shows all household speakers with generous spacing and full room names without truncation.
+  - **Resilient UPnP & SSDP**: Robust SOAP namespace response validation and interface-aware SSDP discovery for instant detection without network bridge dropouts.
   - **Playback Transport**: Big, tactile Play, Pause, Next Track, and Previous Track buttons.
   - **Touch Volume Control**: Capacitive touch volume slider with instant tactile step buttons (`-` and `+`) and 1-tap Mute.
   - **Scrubbing Seek Bar**: Tap anywhere on the progress track to jump forward or backward in the track.
@@ -130,11 +132,11 @@ git pull
 
 ### 1. Speaker Grouping & Multi-Room Control
 Tap the **Room Pill** button in the top-left corner (`Living Room ▼`). The **Speakers & Grouping** modal opens:
-- **Group / Ungroup**: Tap `+ Group` next to any speaker to join it into synchronous playback with the host speaker. Tap `✓ Grouped` to separate it.
-- **🔊 Everywhere**: Tap the quick action button to immediately link every Sonos speaker in your house into party mode.
-- **Separate**: Tap to unlink all speakers into individual standalone rooms.
-- **Per-Speaker Volume & Mute**: Adjust each speaker's volume slider or mute state independently.
-- **Control Active Room**: Tap `Control` on any room to switch primary playback control to that speaker.
+- **1-Tap Card Toggle**: Tap anywhere on a speaker card to instantly toggle it into (**`[ ✓ Playing ]`** in glowing emerald) or out of (**`[ + Add ]`**) the active music group with immediate optimistic visual feedback.
+- **🔊 Group All**: Tap the prominent blue action button to instantly link all speakers in your home to play in sync.
+- **Separate All**: Tap to isolate playback so only the host speaker plays.
+- **Host Coordinator**: The room actively playing and coordinating music is highlighted with a cyan border and `👑 Host` badge.
+- **Smooth Touch Scrolling**: For homes with 5+ speakers, smoothly swipe vertically on the screen without any slider interference. Tap **✕ Done** to close.
 
 ### 2. Music Search & Virtual Keyboard
 Tap the **🔍 Search** button in the top-right header:
