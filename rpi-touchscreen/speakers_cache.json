@@ -1,0 +1,14 @@
+{
+  "speakers": {
+    "Mios Rum": "192.168.1.68",
+    "Andreas Sovrum": "192.168.1.11",
+    "Vardagsrum": "192.168.1.16",
+    "Move": "192.168.1.26"
+  },
+  "uuids": {
+    "Mios Rum": "RINCON_000E58804AA401400",
+    "Move": "RINCON_542A1B7D9B5801400",
+    "Andreas Sovrum": "RINCON_7828CA18490201400",
+    "Vardagsrum": "RINCON_000E5825A0CE01400"
+  }
+}

@@ -305,11 +305,17 @@
                     <div class="group-quick-actions">
                         <button id="btn-group-all" class="group-action-btn group-action-all" title="Play everywhere">🔊 Group All</button>
                         <button id="btn-ungroup-all" class="group-action-btn group-action-ungroup" title="Solo playback on host">Separate All</button>
+                        <div class="modal-scroll-arrows" id="modal-scroll-arrows">
+                            <button id="btn-rooms-scroll-up" class="scroll-arrow-btn" title="Scroll Up">▲</button>
+                            <button id="btn-rooms-scroll-down" class="scroll-arrow-btn" title="Scroll Down">▼</button>
+                        </div>
                         <button id="btn-close-room-modal" class="btn-close-room">✕ Done</button>
                     </div>
                 </div>
-                <div class="rooms-list" id="rooms-list">
-                    <!-- Populated dynamically -->
+                <div class="rooms-list-container" id="rooms-list-container">
+                    <div class="rooms-list" id="rooms-list">
+                        <!-- Populated dynamically -->
+                    </div>
                 </div>
             </div>
         </div>

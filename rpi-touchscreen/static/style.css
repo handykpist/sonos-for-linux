@@ -849,6 +849,35 @@ body.touch-screen {
     background: rgba(255, 255, 255, 0.2);
 }
 
+.modal-scroll-arrows {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.scroll-arrow-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.1s ease, background 0.15s ease;
+}
+
+.scroll-arrow-btn:active {
+    transform: scale(0.92);
+    background: rgba(56, 189, 248, 0.35);
+}
+
 .btn-close-room {
     padding: 8px 16px;
     border-radius: 12px;
@@ -869,34 +898,47 @@ body.touch-screen {
 }
 
 /* Rooms Grid / List with Touch-Friendly Scrolling */
+.rooms-list-container {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
 .rooms-list {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    max-height: 330px;
-    overflow-y: auto;
+    gap: 10px;
+    max-height: 335px;
+    overflow-y: scroll;
     touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
-    padding-right: 4px;
+    padding-right: 6px;
 }
 
 .rooms-list::-webkit-scrollbar {
-    width: 6px;
+    width: 12px;
+}
+
+.rooms-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 6px;
 }
 
 .rooms-list::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 3px;
+    background: rgba(56, 189, 248, 0.45);
+    border-radius: 6px;
+    border: 2px solid #090e17;
 }
 
-/* Individual Speaker Card */
+/* Individual Speaker Card (Compact for 800x480) */
 .room-card {
     background: rgba(30, 41, 59, 0.6);
     border: 2px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    padding: 12px 14px;
-    min-height: 64px;
+    border-radius: 14px;
+    padding: 10px 14px;
+    min-height: 54px;
     display: flex;
     align-items: center;
     justify-content: space-between;

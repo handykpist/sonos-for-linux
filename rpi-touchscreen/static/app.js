@@ -237,7 +237,11 @@ const btnRoomSelect = document.getElementById("btn-room-select");
 const btnCloseRoomModal = document.getElementById("btn-close-room-modal");
 const btnGroupAll = document.getElementById("btn-group-all");
 const btnUngroupAll = document.getElementById("btn-ungroup-all");
+const btnRoomsScrollUp = document.getElementById("btn-rooms-scroll-up");
+const btnRoomsScrollDown = document.getElementById("btn-rooms-scroll-down");
 const roomModalSubtitle = document.getElementById("room-modal-subtitle");
+
+let touchMovedDistance = 0;
 
 async function loadRoomGroups() {
     if (!roomsList) return;
@@ -311,8 +315,11 @@ function renderRoomGroups(data) {
             </div>
         `;
 
-        // Tap on card: toggle grouping
+        // Tap on card: toggle grouping (ignore if scrolling)
         card.addEventListener("click", async () => {
+            if (touchMovedDistance > 10) {
+                return;
+            }
             if (isHost) {
                 return;
             }
@@ -342,6 +349,78 @@ function renderRoomGroups(data) {
         });
 
         roomsList.appendChild(card);
+    });
+}
+
+// 1-Tap Touch Scroll Arrows
+if (btnRoomsScrollUp && roomsList) {
+    btnRoomsScrollUp.addEventListener("click", () => {
+        roomsList.scrollBy({ top: -140, behavior: "smooth" });
+    });
+}
+if (btnRoomsScrollDown && roomsList) {
+    btnRoomsScrollDown.addEventListener("click", () => {
+        roomsList.scrollBy({ top: 140, behavior: "smooth" });
+    });
+}
+
+// Touch & Pointer Drag-to-Scroll for Touchscreens and Kiosks
+if (roomsList) {
+    let touchStartY = 0;
+    let touchStartScroll = 0;
+    let isTouchDragging = false;
+
+    roomsList.addEventListener("touchstart", (e) => {
+        if (!e.touches || e.touches.length === 0) return;
+        touchStartY = e.touches[0].clientY;
+        touchStartScroll = roomsList.scrollTop;
+        isTouchDragging = true;
+        touchMovedDistance = 0;
+    }, { passive: true });
+
+    roomsList.addEventListener("touchmove", (e) => {
+        if (!isTouchDragging || !e.touches || e.touches.length === 0) return;
+        const delta = e.touches[0].clientY - touchStartY;
+        touchMovedDistance = Math.abs(delta);
+        roomsList.scrollTop = touchStartScroll - delta;
+    }, { passive: true });
+
+    roomsList.addEventListener("touchend", () => {
+        isTouchDragging = false;
+        setTimeout(() => { touchMovedDistance = 0; }, 120);
+    });
+
+    roomsList.addEventListener("touchcancel", () => {
+        isTouchDragging = false;
+        touchMovedDistance = 0;
+    });
+
+    // Pointer / mouse drag support (for X11 pointer emulation or desktop browser)
+    let isMouseDown = false;
+    let mouseStartY = 0;
+    let mouseStartScroll = 0;
+
+    roomsList.addEventListener("mousedown", (e) => {
+        isMouseDown = true;
+        mouseStartY = e.clientY;
+        mouseStartScroll = roomsList.scrollTop;
+        touchMovedDistance = 0;
+    });
+
+    window.addEventListener("mousemove", (e) => {
+        if (!isMouseDown) return;
+        const delta = e.clientY - mouseStartY;
+        touchMovedDistance = Math.abs(delta);
+        if (touchMovedDistance > 4) {
+            roomsList.scrollTop = mouseStartScroll - delta;
+        }
+    });
+
+    window.addEventListener("mouseup", () => {
+        if (isMouseDown) {
+            isMouseDown = false;
+            setTimeout(() => { touchMovedDistance = 0; }, 120);
+        }
     });
 }
 

@@ -31,12 +31,14 @@ Designed to live on your kitchen counter, living room wall, or bedside table as 
   - Chromium launched with `--password-store=basic` and `--use-mock-keychain` to eliminate OS keyring popups.
 
 - **Streamlined Multi-Room Grouping (Built for Speed)**:
+  - **All Speakers Always Visible**: Authoritative UPnP `ZoneGroupState` synchronization and disk caching guarantee 100% of household rooms are displayed immediately without omission or SSDP drops.
   - **1-Tap Room Toggle**: Tapping anywhere on a speaker card instantly toggles that speaker into (`[ ✓ Playing ]` in glowing emerald) or out of (`[ + Add ]` in neutral) the playback group with instant optimistic feedback.
   - **🔊 Group All**: 1-tap party mode instantly synchronizes music across all Sonos speakers in your home.
   - **Separate All**: 1-tap solo mode isolates playback back to the host coordinator only.
-  - **Smooth Touch-Scrolling**: Native touch scrolling (`touch-action: pan-y; -webkit-overflow-scrolling: touch;`) without bulky sliders intercepting finger gestures.
-  - **Wide 2-Column Grid (800×480)**: Shows all household speakers with generous spacing and full room names without truncation.
-  - **Resilient UPnP & SSDP**: Robust SOAP namespace response validation and interface-aware SSDP discovery for instant detection without network bridge dropouts.
+  - **1-Tap Scroll Buttons (`▲` and `▼`)**: Tactile header buttons to scroll speaker rows effortlessly for users in a hurry.
+  - **Touch & Pointer Drag-to-Scroll**: Fluid drag scrolling with drag-threshold click suppression so dragging a finger never accidentally toggles a speaker.
+  - **12px Touch Scrollbar**: Broad, high-contrast cyan scrollbar thumb easily operated by finger on 7" touchscreens.
+  - **Compact 2-Column Grid (800×480)**: 54px compact card height fits 4 to 8 speakers comfortably without clipping.
   - **Playback Transport**: Big, tactile Play, Pause, Next Track, and Previous Track buttons.
   - **Touch Volume Control**: Capacitive touch volume slider with instant tactile step buttons (`-` and `+`) and 1-tap Mute.
   - **Scrubbing Seek Bar**: Tap anywhere on the progress track to jump forward or backward in the track.
@@ -131,12 +133,17 @@ git pull
 ## 📖 Touch Controls & Usage Guidelines
 
 ### 1. Speaker Grouping & Multi-Room Control
-Tap the **Room Pill** button in the top-left corner (`Living Room ▼`). The **Speakers & Grouping** modal opens:
+Tap the **Room Pill** button in the top-left corner (`Mios Rum ▼`). The **Speakers & Grouping** modal opens:
+- **All Speakers Always Visible**: All household rooms are populated and updated dynamically via authoritative UPnP topology state and local disk cache.
 - **1-Tap Card Toggle**: Tap anywhere on a speaker card to instantly toggle it into (**`[ ✓ Playing ]`** in glowing emerald) or out of (**`[ + Add ]`**) the active music group with immediate optimistic visual feedback.
 - **🔊 Group All**: Tap the prominent blue action button to instantly link all speakers in your home to play in sync.
 - **Separate All**: Tap to isolate playback so only the host speaker plays.
 - **Host Coordinator**: The room actively playing and coordinating music is highlighted with a cyan border and `👑 Host` badge.
-- **Smooth Touch Scrolling**: For homes with 5+ speakers, smoothly swipe vertically on the screen without any slider interference. Tap **✕ Done** to close.
+- **Effortless Scrolling (Built for Users in a Hurry)**:
+  - **▲ / ▼ Scroll Buttons**: Tap the header arrow buttons to scroll speaker rows up or down instantly.
+  - **Touch & Pointer Drag**: Drag your finger anywhere across the grid; smart drag-threshold click suppression ensures you never toggle a speaker by mistake while dragging.
+  - **12px Tactile Scrollbar**: High-contrast, wide scrollbar thumb easily grabbed with a finger.
+  - Tap **✕ Done** to close.
 
 ### 2. Music Search & Virtual Keyboard
 Tap the **🔍 Search** button in the top-right header:

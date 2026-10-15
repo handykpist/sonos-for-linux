@@ -4,6 +4,8 @@ Pure Python UPnP Sonos Device Controller & Household Tracker.
 Zero external dependencies. Runs natively on Raspberry Pi (ARM / ARM64).
 """
 
+import os
+import json
 import socket
 import threading
 import time
@@ -35,6 +37,11 @@ class SonosDeviceController:
         self.active_ip = ""
         self.running = False
         self._active_group_members = []
+        self._cache_file = os.path.expanduser("~/.local/share/sonos-touchscreen/speakers_cache.json")
+        if not os.path.exists(os.path.dirname(self._cache_file)):
+            self._cache_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "speakers_cache.json")
+        self._load_cache()
+
         self._last_state = {
             "room": "",
             "ip": "",
@@ -52,14 +59,52 @@ class SonosDeviceController:
         }
         self.start()
 
+    def _load_cache(self):
+        try:
+            candidates = [
+                self._cache_file,
+                os.path.join(os.path.dirname(os.path.abspath(__file__)), "speakers_cache.json")
+            ]
+            for path in candidates:
+                if os.path.exists(path):
+                    with open(path, "r") as f:
+                        data = json.load(f)
+                        if isinstance(data, dict):
+                            cached_spk = data.get("speakers", {})
+                            cached_uuids = data.get("uuids", {})
+                            if cached_spk:
+                                with self.lock:
+                                    self.speakers.update(cached_spk)
+                                    self._speaker_uuids.update(cached_uuids)
+                                    if not self.active_room or self.active_room not in self.speakers:
+                                        self.active_room = list(self.speakers.keys())[0]
+                                        self.active_ip = self.speakers[self.active_room]
+                                break
+        except Exception:
+            pass
+
+    def _save_cache(self):
+        try:
+            with self.lock:
+                data = {"speakers": dict(self.speakers), "uuids": dict(self._speaker_uuids)}
+            d = os.path.dirname(self._cache_file)
+            if d and not os.path.exists(d):
+                os.makedirs(d, exist_ok=True)
+            with open(self._cache_file, "w") as f:
+                json.dump(data, f, indent=2)
+        except Exception:
+            pass
+
     def get_state(self):
         with self.lock:
             return dict(self._last_state)
 
     def discover_speakers(self):
-        """Discovers all Sonos speakers on the local subnet via SSDP and ZoneGroupTopology."""
+        """Discovers all Sonos speakers on the local subnet via ZoneGroupTopology and SSDP."""
         discovered = {}
-        # 0. Check existing known speakers first via ZoneGroupTopology (ultra-fast)
+        discovered_uuids = {}
+
+        # 0. Check existing known speakers first via ZoneGroupTopology (ultra-fast <50ms)
         with self.lock:
             existing_ips = list(self.speakers.values())
             if self.active_ip and self.active_ip not in existing_ips:
@@ -74,12 +119,15 @@ class SonosDeviceController:
                     for elem in root.iter():
                         if elem.tag == "ZoneGroupMember":
                             z_name = elem.attrib.get("ZoneName")
+                            z_uuid = elem.attrib.get("UUID")
                             loc = elem.attrib.get("Location", "")
                             if loc and "://" in loc:
                                 z_ip = loc.split("://")[1].split(":")[0]
                                 if z_name and z_ip:
                                     discovered[z_name] = z_ip
-                    if discovered:
+                                    if z_uuid:
+                                        discovered_uuids[z_name] = z_uuid
+                    if len(discovered) >= 4:
                         break
             except Exception:
                 pass
@@ -127,39 +175,36 @@ class SonosDeviceController:
         except Exception:
             pass
 
-        # 2. ZoneGroupTopology Expansion
-        discovered_uuids = {}
+        # 2. ZoneGroupTopology Expansion: Query GetZoneGroupState on all discovered IPs
         found_ips = list(discovered.values())
         for seed_ip in found_ips:
             try:
-                xml_data = self._soap_call(seed_ip, "/ZoneGroupTopology/Control", "ZoneGroupTopology", "GetZoneGroupAttributes")
-                if xml_data and "CurrentZoneGroupName" in xml_data:
-                    group_xml = self._soap_call(seed_ip, "/ZoneGroupTopology/Control", "ZoneGroupTopology", "GetZoneGroupState")
-                    if group_xml:
-                        raw = group_xml.split("<ZoneGroupState>")[1].split("</ZoneGroupState>")[0] if "<ZoneGroupState>" in group_xml else group_xml
-                        root = ET.fromstring(html.unescape(raw))
-                        for elem in root.iter():
-                            if elem.tag == "ZoneGroupMember":
-                                z_name = elem.attrib.get("ZoneName")
-                                z_uuid = elem.attrib.get("UUID")
-                                loc = elem.attrib.get("Location", "")
-                                if loc and "://" in loc:
-                                    z_ip = loc.split("://")[1].split(":")[0]
-                                    if z_name and z_ip:
-                                        discovered[z_name] = z_ip
-                                        if z_uuid:
-                                            discovered_uuids[z_name] = z_uuid
-                if len(discovered) > len(found_ips):
-                    break
+                group_xml = self._soap_call(seed_ip, "/ZoneGroupTopology/Control", "ZoneGroupTopology", "GetZoneGroupState", timeout=2.5)
+                if group_xml and "<ZoneGroupState>" in group_xml:
+                    raw = group_xml.split("<ZoneGroupState>")[1].split("</ZoneGroupState>")[0]
+                    root = ET.fromstring(html.unescape(raw))
+                    for elem in root.iter():
+                        if elem.tag == "ZoneGroupMember":
+                            z_name = elem.attrib.get("ZoneName")
+                            z_uuid = elem.attrib.get("UUID")
+                            loc = elem.attrib.get("Location", "")
+                            if loc and "://" in loc:
+                                z_ip = loc.split("://")[1].split(":")[0]
+                                if z_name and z_ip:
+                                    discovered[z_name] = z_ip
+                                    if z_uuid:
+                                        discovered_uuids[z_name] = z_uuid
             except Exception:
                 continue
 
         with self.lock:
-            self.speakers = discovered
+            self.speakers.update(discovered)
             self._speaker_uuids.update(discovered_uuids)
-            if discovered and (not self.active_room or self.active_room not in discovered):
-                self.active_room = list(discovered.keys())[0]
-                self.active_ip = discovered[self.active_room]
+            if discovered and (not self.active_room or self.active_room not in self.speakers):
+                self.active_room = list(self.speakers.keys())[0]
+                self.active_ip = self.speakers[self.active_room]
+
+        self._save_cache()
 
     def _get_room_name(self, ip: str) -> str:
         try:
@@ -583,16 +628,29 @@ class SonosDeviceController:
             active_members = [m["name"] for m in active_group["members"]] if active_group else ([active_room] if active_room else [])
             active_member_count = len(active_members)
 
+            # Ensure all rooms from ZoneGroupState and self.speakers are present
+            with self.lock:
+                for name, meta in rooms_map.items():
+                    if meta.get("ip"):
+                        self.speakers[name] = meta["ip"]
+                        if meta.get("uuid"):
+                            self._speaker_uuids[name] = meta["uuid"]
+                all_room_names = list(rooms_map.keys())
+                for name in self.speakers.keys():
+                    if name not in all_room_names:
+                        all_room_names.append(name)
+
             decorated_rooms = []
-            for name, ip in speakers.items():
+            for name in all_room_names:
                 room_meta = rooms_map.get(name, {})
-                uuid = room_meta.get("uuid", "")
+                ip = room_meta.get("ip") or self.speakers.get(name, "")
+                uuid = room_meta.get("uuid") or self._speaker_uuids.get(name, "")
                 is_active = (name == active_room)
                 is_in_active_group = (name in active_members)
                 is_grouped = (active_member_count > 1) if is_active else is_in_active_group
                 
-                vol = self.get_volume_for_ip(ip)
-                muted = self.get_mute_for_ip(ip)
+                vol = self.get_volume_for_ip(ip) if ip else 0
+                muted = self.get_mute_for_ip(ip) if ip else False
 
                 decorated_rooms.append({
                     "name": name,
