@@ -297,15 +297,15 @@
         <!-- Room Selector & Speaker Grouping Modal -->
         <div class="modal-overlay" id="room-modal">
             <div class="modal-card room-grouping-card">
-                <div class="modal-header">
+                <div class="modal-header-grouping">
                     <div class="modal-title-box">
                         <h2>🔊 Speakers & Grouping</h2>
-                        <span class="modal-subtitle">Choose speakers to play in and group together</span>
+                        <span class="modal-subtitle" id="room-modal-subtitle">Tap a speaker to toggle playback in that room</span>
                     </div>
                     <div class="group-quick-actions">
-                        <button id="btn-group-all" class="group-action-btn" title="Play everywhere">🔊 Everywhere</button>
-                        <button id="btn-ungroup-all" class="group-action-btn group-action-ungroup" title="Ungroup all">Separate</button>
-                        <button id="btn-close-room-modal" class="close-drawer-btn">✕</button>
+                        <button id="btn-group-all" class="group-action-btn group-action-all" title="Play everywhere">🔊 Group All</button>
+                        <button id="btn-ungroup-all" class="group-action-btn group-action-ungroup" title="Solo playback on host">Separate All</button>
+                        <button id="btn-close-room-modal" class="btn-close-room">✕ Done</button>
                     </div>
                 </div>
                 <div class="rooms-list" id="rooms-list">

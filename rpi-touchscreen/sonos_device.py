@@ -59,6 +59,31 @@ class SonosDeviceController:
     def discover_speakers(self):
         """Discovers all Sonos speakers on the local subnet via SSDP and ZoneGroupTopology."""
         discovered = {}
+        # 0. Check existing known speakers first via ZoneGroupTopology (ultra-fast)
+        with self.lock:
+            existing_ips = list(self.speakers.values())
+            if self.active_ip and self.active_ip not in existing_ips:
+                existing_ips.append(self.active_ip)
+
+        for seed_ip in existing_ips:
+            try:
+                group_xml = self._soap_call(seed_ip, "/ZoneGroupTopology/Control", "ZoneGroupTopology", "GetZoneGroupState", timeout=2.0)
+                if group_xml and "<ZoneGroupState>" in group_xml:
+                    raw = group_xml.split("<ZoneGroupState>")[1].split("</ZoneGroupState>")[0]
+                    root = ET.fromstring(html.unescape(raw))
+                    for elem in root.iter():
+                        if elem.tag == "ZoneGroupMember":
+                            z_name = elem.attrib.get("ZoneName")
+                            loc = elem.attrib.get("Location", "")
+                            if loc and "://" in loc:
+                                z_ip = loc.split("://")[1].split(":")[0]
+                                if z_name and z_ip:
+                                    discovered[z_name] = z_ip
+                    if discovered:
+                        break
+            except Exception:
+                pass
+
         # 1. SSDP Multicast Search
         msg = (
             'M-SEARCH * HTTP/1.1\r\n'
@@ -68,8 +93,22 @@ class SonosDeviceController:
             'ST: urn:schemas-upnp-org:device:ZonePlayer:1\r\n\r\n'
         )
         try:
+            local_ip = ""
+            try:
+                temp_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                temp_s.connect(('8.8.8.8', 80))
+                local_ip = temp_s.getsockname()[0]
+                temp_s.close()
+            except Exception:
+                pass
+
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
             s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            if local_ip:
+                try:
+                    s.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, socket.inet_aton(local_ip))
+                except Exception:
+                    pass
             s.settimeout(2.0)
             s.sendto(msg.encode("utf-8"), ("239.255.255.250", 1900))
             
@@ -540,17 +579,17 @@ class SonosDeviceController:
                     "is_active_group": is_active_group
                 })
 
+            active_group = next((g for g in groups if g["is_active_group"]), None)
+            active_members = [m["name"] for m in active_group["members"]] if active_group else ([active_room] if active_room else [])
+            active_member_count = len(active_members)
+
             decorated_rooms = []
             for name, ip in speakers.items():
                 room_meta = rooms_map.get(name, {})
                 uuid = room_meta.get("uuid", "")
                 is_active = (name == active_room)
-                is_grouped = False
-                if active_coord_uuid:
-                    is_grouped = any(
-                        g["is_active_group"] and any(m["name"] == name for m in g["members"])
-                        for g in groups
-                    )
+                is_in_active_group = (name in active_members)
+                is_grouped = (active_member_count > 1) if is_active else is_in_active_group
                 
                 vol = self.get_volume_for_ip(ip)
                 muted = self.get_mute_for_ip(ip)
@@ -567,13 +606,8 @@ class SonosDeviceController:
                     "muted": muted
                 })
 
-            active_group = next((g for g in groups if g["is_active_group"]), None)
-            active_member_count = len(active_group["members"]) if active_group else 1
             with self.lock:
-                if active_group:
-                    self._active_group_members = [m["name"] for m in active_group["members"]]
-                else:
-                    self._active_group_members = [active_room] if active_room else []
+                self._active_group_members = active_members
 
             return {
                 "active_room": active_room,
@@ -605,7 +639,7 @@ class SonosDeviceController:
 
         uri = f"x-rincon:{coord_uuid}"
         res = self._soap_call(member_ip, "/MediaRenderer/AVTransport/Control", "AVTransport", "SetAVTransportURI", f"<CurrentURI>{uri}</CurrentURI><CurrentURIMetaData></CurrentURIMetaData>")
-        success = "<SetAVTransportURIResponse" in res
+        success = "SetAVTransportURIResponse" in res
         if success:
             threading.Thread(target=self.get_topology, daemon=True).start()
         return success
@@ -619,7 +653,7 @@ class SonosDeviceController:
             return False
 
         res = self._soap_call(member_ip, "/MediaRenderer/AVTransport/Control", "AVTransport", "BecomeCoordinatorOfStandaloneGroup")
-        success = "<BecomeCoordinatorOfStandaloneGroupResponse" in res
+        success = "BecomeCoordinatorOfStandaloneGroupResponse" in res
         if success:
             threading.Thread(target=self.get_topology, daemon=True).start()
         return success

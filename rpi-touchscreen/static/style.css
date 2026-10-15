@@ -767,10 +767,24 @@ body.touch-screen {
 }
 
 .modal-card.room-grouping-card {
-    width: 580px;
+    width: 740px;
     max-height: 440px;
+    background: #090e17;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 16px 20px;
     display: flex;
     flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
+}
+
+.modal-header-grouping {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 10px;
 }
 
 .modal-title-box {
@@ -779,237 +793,225 @@ body.touch-screen {
     gap: 2px;
 }
 
+.modal-title-box h2 {
+    font-size: 19px;
+    font-weight: 800;
+    color: #fff;
+    margin: 0;
+}
+
 .modal-subtitle {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-muted);
+}
+
+.modal-subtitle .host-highlight {
+    color: var(--accent);
+    font-weight: 700;
 }
 
 .group-quick-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .group-action-btn {
-    background: rgba(56, 189, 248, 0.15);
-    border: 1px solid rgba(56, 189, 248, 0.4);
-    color: var(--accent);
-    padding: 6px 12px;
-    border-radius: 10px;
-    font-size: 12px;
-    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 800;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: transform 0.1s ease, background 0.15s ease, opacity 0.15s ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.group-action-btn:active {
+.group-action-all {
+    background: var(--accent);
+    border: 1px solid var(--accent);
+    color: #0b1120;
+}
+
+.group-action-all:active {
     transform: scale(0.96);
-    background: rgba(56, 189, 248, 0.3);
+    background: #7dd3fc;
 }
 
 .group-action-ungroup {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.15);
-    color: #e2e8f0;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #f1f5f9;
 }
 
+.group-action-ungroup:active {
+    transform: scale(0.96);
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.btn-close-room {
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 800;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #fff;
+    cursor: pointer;
+    transition: transform 0.1s ease, background 0.15s ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn-close-room:active {
+    transform: scale(0.96);
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Rooms Grid / List with Touch-Friendly Scrolling */
 .rooms-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
     max-height: 330px;
     overflow-y: auto;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
     padding-right: 4px;
 }
 
+.rooms-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.rooms-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+/* Individual Speaker Card */
 .room-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 14px;
+    background: rgba(30, 41, 59, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
     padding: 12px 14px;
+    min-height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.room-card:active {
+    transform: scale(0.98);
+}
+
+/* Host (Coordinator) Card */
+.room-card.is-host {
+    background: rgba(56, 189, 248, 0.12);
+    border-color: rgba(56, 189, 248, 0.6);
+}
+
+/* Grouped Playing Card */
+.room-card.is-grouped {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.6);
+}
+
+/* Standalone / Idle Card */
+.room-card.is-separate {
+    background: rgba(30, 41, 59, 0.5);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.room-card.is-separate:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Left: Info */
+.room-card-info {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    transition: border-color 0.2s ease, background 0.2s ease;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
 }
 
-.room-card.is-active {
-    border-color: var(--accent);
-    background: rgba(56, 189, 248, 0.08);
-}
-
-.room-card.is-grouped:not(.is-active) {
-    border-color: rgba(56, 189, 248, 0.4);
-    background: rgba(56, 189, 248, 0.04);
-}
-
-.room-header-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.room-name-wrapper {
+.room-name-line {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
-.room-speaker-icon {
-    font-size: 18px;
+.room-spk-icon {
+    font-size: 16px;
+    flex-shrink: 0;
 }
 
 .room-title-text {
     font-size: 16px;
     font-weight: 800;
     color: #f8fafc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.room-badge {
-    font-size: 10px;
+.room-status-text {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.room-card.is-host .room-status-text {
+    color: var(--accent);
+}
+
+.room-card.is-grouped .room-status-text {
+    color: #34d399;
+}
+
+/* Right: Actions */
+.room-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.room-toggle-pill {
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 12px;
     font-weight: 800;
-    padding: 3px 8px;
-    border-radius: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    pointer-events: none;
 }
 
-.room-badge-master {
+.room-toggle-pill.pill-host {
     background: rgba(56, 189, 248, 0.25);
     color: var(--accent);
     border: 1px solid rgba(56, 189, 248, 0.5);
 }
 
-.room-badge-grouped {
-    background: rgba(52, 211, 153, 0.2);
+.room-toggle-pill.pill-playing {
+    background: rgba(16, 185, 129, 0.25);
     color: #34d399;
-    border: 1px solid rgba(52, 211, 153, 0.4);
+    border: 1px solid rgba(16, 185, 129, 0.5);
 }
 
-.room-badge-solo {
+.room-toggle-pill.pill-add {
     background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.5);
-}
-
-.room-actions-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.btn-group-toggle {
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    background: rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
     border: 1px solid rgba(255, 255, 255, 0.15);
-    color: #e2e8f0;
-    transition: all 0.15s ease;
-}
-
-.btn-group-toggle.is-grouped {
-    background: rgba(52, 211, 153, 0.2);
-    border-color: #34d399;
-    color: #34d399;
-}
-
-.btn-group-toggle:active {
-    transform: scale(0.95);
-}
-
-.btn-set-active {
-    padding: 6px 10px;
-    border-radius: 8px;
-    font-size: 11px;
-    font-weight: 700;
-    cursor: pointer;
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.7);
-    transition: all 0.15s ease;
-}
-
-.btn-set-active:hover, .btn-set-active:active {
-    background: rgba(255, 255, 255, 0.15);
-    color: #fff;
-}
-
-.room-vol-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding-top: 4px;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.btn-room-mute {
-    background: transparent;
-    border: none;
-    font-size: 16px;
-    cursor: pointer;
-    padding: 4px;
-    opacity: 0.8;
-}
-
-.btn-room-mute:active {
-    transform: scale(0.9);
-}
-
-.room-vol-slider-wrap {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.btn-room-vol-step {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid var(--border);
-    color: #fff;
-    font-size: 16px;
-    font-weight: 800;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-room-vol-step:active {
-    background: rgba(255, 255, 255, 0.25);
-}
-
-.room-vol-range {
-    flex: 1;
-    -webkit-appearance: none;
-    appearance: none;
-    height: 6px;
-    border-radius: 3px;
-    background: rgba(255, 255, 255, 0.15);
-    outline: none;
-}
-
-.room-vol-range::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: var(--accent);
-    cursor: pointer;
-    box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
-}
-
-.room-vol-val {
-    font-size: 12px;
-    font-weight: 700;
-    min-width: 34px;
-    text-align: right;
-    color: var(--text-muted);
 }
 
 /* Night / Dimmer Overlay */

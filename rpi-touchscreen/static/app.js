@@ -237,11 +237,10 @@ const btnRoomSelect = document.getElementById("btn-room-select");
 const btnCloseRoomModal = document.getElementById("btn-close-room-modal");
 const btnGroupAll = document.getElementById("btn-group-all");
 const btnUngroupAll = document.getElementById("btn-ungroup-all");
-let roomVolDebounceTimers = {};
+const roomModalSubtitle = document.getElementById("room-modal-subtitle");
 
 async function loadRoomGroups() {
     if (!roomsList) return;
-    roomsList.innerHTML = "<p class='lyrics-notice'>Loading speakers and groups...</p>";
     try {
         const res = await fetch("/api/groups");
         if (!res.ok) throw new Error("Failed to load groups");
@@ -258,136 +257,89 @@ function renderRoomGroups(data) {
     const activeRoom = data.active_room || (currentState ? currentState.room : "");
     const rooms = data.rooms || [];
 
+    if (roomModalSubtitle) {
+        if (activeRoom) {
+            roomModalSubtitle.innerHTML = `Coordinator: <span class="host-highlight">${activeRoom}</span> • Tap speaker to add/remove`;
+        } else {
+            roomModalSubtitle.textContent = "Tap a speaker to toggle playback in that room";
+        }
+    }
+
     if (rooms.length === 0) {
-        roomsList.innerHTML = "<p class='lyrics-notice'>No Sonos speakers discovered.</p>";
+        roomsList.innerHTML = "<p class='lyrics-notice'>Searching for Sonos speakers on local network...</p>";
         return;
     }
 
     rooms.forEach(room => {
         const card = document.createElement("div");
-        const isActive = room.is_active || (room.name === activeRoom);
+        const isHost = (room.name === activeRoom);
         const isGrouped = room.is_grouped;
-        card.className = `room-card ${isActive ? 'is-active' : ''} ${isGrouped ? 'is-grouped' : ''}`;
 
-        // Badge
-        let badgeHtml = '';
-        if (isActive) {
-            badgeHtml = '<span class="room-badge room-badge-master">Host</span>';
+        let cardClass = "room-card";
+        let icon = "🔈";
+        let statusText = "Standalone / Off";
+        let pillHtml = "";
+
+        if (isHost) {
+            cardClass += " is-host";
+            icon = "🔊";
+            statusText = "Host (Playing Here)";
+            pillHtml = `<span class="room-toggle-pill pill-host">👑 Host</span>`;
         } else if (isGrouped) {
-            badgeHtml = '<span class="room-badge room-badge-grouped">Grouped</span>';
+            cardClass += " is-grouped";
+            icon = "🔊";
+            statusText = "Playing in sync";
+            pillHtml = `<span class="room-toggle-pill pill-playing">✓ Playing</span>`;
         } else {
-            badgeHtml = '<span class="room-badge room-badge-solo">Separate</span>';
+            cardClass += " is-separate";
+            icon = "🔈";
+            statusText = "Tap to add to music";
+            pillHtml = `<span class="room-toggle-pill pill-add">+ Add</span>`;
         }
 
-        // Action Buttons
-        let actionButtonsHtml = '';
-        if (isActive) {
-            actionButtonsHtml = '<span style="font-size:12px; font-weight:700; color:var(--accent); padding:4px 8px;">Active</span>';
-        } else {
-            const groupBtnClass = isGrouped ? 'btn-group-toggle is-grouped' : 'btn-group-toggle';
-            const groupBtnText = isGrouped ? '✓ Grouped' : '+ Group';
-            actionButtonsHtml = `
-                <button class="${groupBtnClass}" data-room="${room.name}" data-action="toggle-group">${groupBtnText}</button>
-                <button class="btn-set-active" data-room="${room.name}" data-action="set-active">Control</button>
-            `;
-        }
-
+        card.className = cardClass;
         card.innerHTML = `
-            <div class="room-header-row">
-                <div class="room-name-wrapper">
-                    <span class="room-speaker-icon">${room.muted ? '🔇' : '🔊'}</span>
+            <div class="room-card-info">
+                <div class="room-name-line">
+                    <span class="room-spk-icon">${icon}</span>
                     <span class="room-title-text">${room.name}</span>
-                    ${badgeHtml}
                 </div>
-                <div class="room-actions-right">
-                    ${actionButtonsHtml}
-                </div>
+                <span class="room-status-text">${statusText}</span>
             </div>
-            <div class="room-vol-row">
-                <button class="btn-room-mute" data-room="${room.name}" title="${room.muted ? 'Unmute' : 'Mute'}">${room.muted ? '🔇' : '🔊'}</button>
-                <div class="room-vol-slider-wrap">
-                    <button class="btn-room-vol-step btn-vol-minus" data-room="${room.name}">-</button>
-                    <input type="range" class="room-vol-range" min="0" max="100" value="${room.volume}" data-room="${room.name}">
-                    <button class="btn-room-vol-step btn-vol-plus" data-room="${room.name}">+</button>
-                </div>
-                <span class="room-vol-val" id="vol-val-${room.name.replace(/\s+/g, '-')}">${room.volume}%</span>
+            <div class="room-card-actions">
+                ${pillHtml}
             </div>
         `;
 
-        // Event: Toggle Group
-        const toggleBtn = card.querySelector('[data-action="toggle-group"]');
-        if (toggleBtn) {
-            toggleBtn.addEventListener("click", async () => {
-                toggleBtn.disabled = true;
-                toggleBtn.textContent = "...";
-                if (isGrouped) {
-                    await postAction("/api/group/leave", { room: room.name });
-                } else {
-                    await postAction("/api/group/join", { room: room.name, coordinator: activeRoom });
+        // Tap on card: toggle grouping
+        card.addEventListener("click", async () => {
+            if (isHost) {
+                return;
+            }
+
+            // Optimistic UI update for instant touch response
+            const pill = card.querySelector(".room-toggle-pill");
+            const statusLabel = card.querySelector(".room-status-text");
+            if (isGrouped) {
+                card.className = "room-card is-separate";
+                if (pill) {
+                    pill.className = "room-toggle-pill pill-add";
+                    pill.textContent = "⏳ Leaving...";
                 }
-                setTimeout(loadRoomGroups, 250);
-            });
-        }
+                if (statusLabel) statusLabel.textContent = "Separating...";
+                await postAction("/api/group/leave", { room: room.name });
+            } else {
+                card.className = "room-card is-grouped";
+                if (pill) {
+                    pill.className = "room-toggle-pill pill-playing";
+                    pill.textContent = "⏳ Adding...";
+                }
+                if (statusLabel) statusLabel.textContent = "Joining sync...";
+                await postAction("/api/group/join", { room: room.name, coordinator: activeRoom });
+            }
 
-        // Event: Set Active
-        const setActiveBtn = card.querySelector('[data-action="set-active"]');
-        if (setActiveBtn) {
-            setActiveBtn.addEventListener("click", async () => {
-                setActiveBtn.disabled = true;
-                await postAction("/api/speaker", { room: room.name });
-                setTimeout(loadRoomGroups, 200);
-            });
-        }
-
-        // Event: Mute
-        const muteBtn = card.querySelector('.btn-room-mute');
-        if (muteBtn) {
-            muteBtn.addEventListener("click", async () => {
-                await postAction("/api/room/mute", { room: room.name, muted: !room.muted });
-                setTimeout(loadRoomGroups, 200);
-            });
-        }
-
-        // Event: Slider Volume
-        const slider = card.querySelector('.room-vol-range');
-        const valLabel = card.querySelector('.room-vol-val');
-        if (slider && valLabel) {
-            slider.addEventListener("input", () => {
-                valLabel.textContent = `${slider.value}%`;
-                clearTimeout(roomVolDebounceTimers[room.name]);
-                roomVolDebounceTimers[room.name] = setTimeout(() => {
-                    postAction("/api/room/volume", { room: room.name, volume: parseInt(slider.value, 10) });
-                }, 120);
-            });
-        }
-
-        // Event: Step Minus
-        const minusBtn = card.querySelector('.btn-vol-minus');
-        if (minusBtn && slider && valLabel) {
-            minusBtn.addEventListener("click", () => {
-                let v = Math.max(0, parseInt(slider.value, 10) - 3);
-                slider.value = v;
-                valLabel.textContent = `${v}%`;
-                clearTimeout(roomVolDebounceTimers[room.name]);
-                roomVolDebounceTimers[room.name] = setTimeout(() => {
-                    postAction("/api/room/volume", { room: room.name, volume: v });
-                }, 120);
-            });
-        }
-
-        // Event: Step Plus
-        const plusBtn = card.querySelector('.btn-vol-plus');
-        if (plusBtn && slider && valLabel) {
-            plusBtn.addEventListener("click", () => {
-                let v = Math.min(100, parseInt(slider.value, 10) + 3);
-                slider.value = v;
-                valLabel.textContent = `${v}%`;
-                clearTimeout(roomVolDebounceTimers[room.name]);
-                roomVolDebounceTimers[room.name] = setTimeout(() => {
-                    postAction("/api/room/volume", { room: room.name, volume: v });
-                }, 120);
-            });
-        }
+            setTimeout(loadRoomGroups, 400);
+        });
 
         roomsList.appendChild(card);
     });
@@ -408,26 +360,62 @@ if (btnCloseRoomModal) {
 
 if (btnGroupAll) {
     btnGroupAll.addEventListener("click", async () => {
+        btnGroupAll.disabled = true;
         btnGroupAll.textContent = "Grouping...";
         const activeRoom = currentState ? currentState.room : "";
+        // Optimistic UI update across all cards
+        document.querySelectorAll(".room-card:not(.is-host)").forEach(card => {
+            card.className = "room-card is-grouped";
+            const pill = card.querySelector(".room-toggle-pill");
+            if (pill) {
+                pill.className = "room-toggle-pill pill-playing";
+                pill.textContent = "✓ Playing";
+            }
+            const status = card.querySelector(".room-status-text");
+            if (status) status.textContent = "Playing in sync";
+        });
         await postAction("/api/group/all", { coordinator: activeRoom });
         setTimeout(() => {
-            btnGroupAll.textContent = "🔊 Everywhere";
+            btnGroupAll.disabled = false;
+            btnGroupAll.textContent = "🔊 Group All";
             loadRoomGroups();
-        }, 350);
+        }, 500);
     });
 }
 
 if (btnUngroupAll) {
     btnUngroupAll.addEventListener("click", async () => {
+        btnUngroupAll.disabled = true;
         btnUngroupAll.textContent = "Separating...";
+        // Optimistic UI update across all cards
+        document.querySelectorAll(".room-card:not(.is-host)").forEach(card => {
+            card.className = "room-card is-separate";
+            const pill = card.querySelector(".room-toggle-pill");
+            if (pill) {
+                pill.className = "room-toggle-pill pill-add";
+                pill.textContent = "+ Add";
+            }
+            const status = card.querySelector(".room-status-text");
+            if (status) status.textContent = "Standalone / Off";
+        });
         await postAction("/api/group/ungroup_all", {});
         setTimeout(() => {
-            btnUngroupAll.textContent = "Separate";
+            btnUngroupAll.disabled = false;
+            btnUngroupAll.textContent = "Separate All";
             loadRoomGroups();
-        }, 350);
+        }, 500);
     });
 }
+
+// Hash routing for modal direct view
+function checkModalHash() {
+    if (window.location.hash === "#rooms") {
+        roomModal.classList.add("open");
+        loadRoomGroups();
+    }
+}
+window.addEventListener("hashchange", checkModalHash);
+setTimeout(checkModalHash, 200);
 
 // 8. Sonos Radio, Favorites & Playlists Carousel Drawer
 const btnFavoritesToggle = document.getElementById("btn-favorites-toggle");
