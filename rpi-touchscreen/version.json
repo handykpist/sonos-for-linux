@@ -1,0 +1,7 @@
+{
+  "version": "1.2.0",
+  "name": "Sonos Touchscreen Controller",
+  "deployment": "Raspberry Pi Kiosk",
+  "target": "Raspberry Pi 7\" Touchscreen (800x480)",
+  "build_date": "2026-10-15"
+}

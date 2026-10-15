@@ -80,6 +80,7 @@ Designed to live on your kitchen counter, living room wall, or bedside table as 
     - **Reboot Raspberry Pi**: Safely reboot the hardware.
     - **Shut Down Device**: Safely power off the Raspberry Pi.
     - **Check for Updates**: Pull latest commits from GitHub and restart the controller with 1 tap right from the screen.
+    - **Live Version & Deployment Badge**: Displays running release version (e.g. `v1.2.0`), git commit hash, and target deployment (`RPI KIOSK`) directly in the modal footer.
 
 - **100% Native ARM64 & ARMhf**:
   - Built with pure Python standard library and lightweight web standards.
@@ -127,6 +128,12 @@ git pull
 bash install.sh
 ```
 *(Running `bash install.sh` refreshes all application files and restarts the `sonos-touchscreen` user service).*
+
+> [!TIP]
+> If `git pull` reports local changes (e.g. `error: Your local changes to install.sh would be overwritten by merge`), cleanly reset and install with:
+> ```bash
+> git reset --hard origin/main && bash install.sh
+> ```
 
 ---
 

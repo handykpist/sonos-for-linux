@@ -127,9 +127,24 @@ if [ "$SRC_DIR" != "$INSTALL_DIR" ]; then
     cp -r "$SRC_DIR/lyrics.py" "$INSTALL_DIR/"
     cp -r "$SRC_DIR/static" "$INSTALL_DIR/"
     cp -r "$SRC_DIR/kiosk" "$INSTALL_DIR/"
+    cp -r "$SRC_DIR/version.json" "$INSTALL_DIR/" 2>/dev/null || true
     cp -r "$SRC_DIR/speakers_cache.json" "$INSTALL_DIR/" 2>/dev/null || true
     chmod +x "$INSTALL_DIR/kiosk/"*.sh 2>/dev/null || true
 fi
+
+# Update version metadata
+VERSION="$(grep -o '"version": *"[^"]*"' "$SRC_DIR/version.json" 2>/dev/null | cut -d'"' -f4 || echo "1.2.0")"
+SHORT_HASH="$(echo "$REMOTE_HASH" | cut -c1-7)"
+cat << EOF > "$INSTALL_DIR/version.json"
+{
+  "version": "$VERSION",
+  "commit": "$SHORT_HASH",
+  "name": "Sonos Touchscreen Controller",
+  "deployment": "Raspberry Pi Kiosk",
+  "target": "Raspberry Pi 7\" Touchscreen (800x480)",
+  "installed_at": "$(date '+%Y-%m-%d %H:%M:%S')"
+}
+EOF
 
 # Remember repo path
 echo "$REPO_DIR" > "$INSTALL_DIR/repo_path.txt"

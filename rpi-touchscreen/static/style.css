@@ -1233,6 +1233,46 @@ body.touch-screen {
     margin-top: 2px;
 }
 
+.power-modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 14px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.power-version-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.power-version-num {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.power-commit-hash {
+    font-family: monospace;
+    opacity: 0.8;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.power-deploy-badge {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #94a3b8;
+}
+
 /* ========================================================
    SEARCH DRAWER & VIRTUAL KEYBOARD (800x480 TOUCH FIT)
    ======================================================== */

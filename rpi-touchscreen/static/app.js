@@ -489,8 +489,13 @@ if (btnUngroupAll) {
 // Hash routing for modal direct view
 function checkModalHash() {
     if (window.location.hash === "#rooms") {
-        roomModal.classList.add("open");
+        roomModal?.classList.add("open");
         loadRoomGroups();
+    } else if (window.location.hash === "#power") {
+        if (powerModal) {
+            updatePowerModalVersionUI();
+            powerModal.classList.add("open");
+        }
     }
 }
 window.addEventListener("hashchange", checkModalHash);
@@ -924,9 +929,45 @@ const btnHiddenPower = document.getElementById("btn-hidden-power");
 const powerModal = document.getElementById("power-modal");
 
 let defaultPowerModalHtml = "";
+let systemVersionData = null;
+
+async function loadSystemVersion() {
+    try {
+        const res = await fetch("/api/version");
+        if (!res.ok) return;
+        systemVersionData = await res.json();
+        updatePowerModalVersionUI();
+    } catch (e) {
+        console.warn("Could not fetch version:", e);
+    }
+}
+
+function updatePowerModalVersionUI() {
+    if (!systemVersionData) return;
+    const verEl = document.getElementById("sys-version-num");
+    const commitEl = document.getElementById("sys-commit-hash");
+    const deployEl = document.getElementById("sys-deploy-badge");
+    const updateSub = document.getElementById("power-card-update-sub");
+
+    if (verEl && systemVersionData.version) {
+        verEl.textContent = `v${systemVersionData.version}`;
+    }
+    if (commitEl) {
+        commitEl.textContent = systemVersionData.commit ? `(${systemVersionData.commit})` : "";
+    }
+    if (deployEl && systemVersionData.deployment) {
+        deployEl.textContent = systemVersionData.deployment.toUpperCase();
+    }
+    if (updateSub && systemVersionData.version) {
+        const commitPart = systemVersionData.commit ? ` (${systemVersionData.commit})` : "";
+        updateSub.textContent = `Current: v${systemVersionData.version}${commitPart} • Tap to check`;
+    }
+}
 
 function bindPowerModalButtons() {
     if (!powerModal) return;
+
+    updatePowerModalVersionUI();
 
     document.getElementById("btn-close-power-modal")?.addEventListener("click", () => {
         powerModal.classList.remove("open");
@@ -959,6 +1000,7 @@ if (powerModal) {
         defaultPowerModalHtml = modalCard.innerHTML;
     }
     bindPowerModalButtons();
+    loadSystemVersion();
 }
 
 if (btnHiddenPower) {
@@ -969,6 +1011,7 @@ if (btnHiddenPower) {
                 modalCard.innerHTML = defaultPowerModalHtml;
                 bindPowerModalButtons();
             }
+            updatePowerModalVersionUI();
             powerModal.classList.add("open");
         }
     });
@@ -1015,7 +1058,7 @@ function triggerTouchscreenUpdate() {
         <div style="text-align:center; padding:28px 14px;">
             <div id="update-modal-icon" style="font-size:42px; margin-bottom:12px;">📥</div>
             <h2 id="update-modal-title" style="font-size:20px; font-weight:800; color:#fff;">Updating Sonos Touchscreen...</h2>
-            <p id="update-modal-sub" style="color:rgba(255,255,255,0.7); margin-top:8px; font-size:13px; line-height:1.4;">Connecting to remote Git repository...</p>
+            <p id="update-modal-sub" style="color:rgba(255,255,255,0.7); margin-top:8px; font-size:13px; line-height:1.4;">${systemVersionData ? `Current: v${systemVersionData.version} (${systemVersionData.commit || 'release'})` : 'Connecting to remote Git repository...'}</p>
             <div id="update-modal-progress" style="margin-top:16px; font-size:13px; color:var(--accent); font-family:monospace; min-height:20px;">Checking network & remote...</div>
             <div style="margin-top:22px;">
                 <button id="btn-close-update-modal" style="padding:10px 24px; border-radius:12px; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); color:#fff; font-size:13px; font-weight:700; cursor:pointer;">✕ Dismiss</button>

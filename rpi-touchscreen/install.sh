@@ -5,8 +5,11 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INSTALL_DIR="$HOME/.local/share/sonos-touchscreen"
 
+COMMIT="$(git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null || echo "release")"
+VERSION="$(grep -o '"version": *"[^"]*"' "$SCRIPT_DIR/version.json" 2>/dev/null | cut -d'"' -f4 || echo "1.2.0")"
+
 echo "=========================================================="
-echo "      Sonos Touchscreen Controller - Raspberry Pi Setup   "
+echo "   Sonos Touchscreen Controller - Setup (v$VERSION - $COMMIT)   "
 echo "=========================================================="
 
 # 1. Install system prerequisites (if missing)
@@ -24,7 +27,7 @@ if command -v raspi-config >/dev/null 2>&1; then
 fi
 
 # 2. Deploy application files
-echo "[*] Installing Sonos Touchscreen to $INSTALL_DIR..."
+echo "[*] Installing Sonos Touchscreen to $INSTALL_DIR (v$VERSION - $COMMIT)..."
 mkdir -p "$INSTALL_DIR"
 cp -r "$SCRIPT_DIR/server.py" "$INSTALL_DIR/"
 cp -r "$SCRIPT_DIR/sonos_device.py" "$INSTALL_DIR/"
@@ -36,6 +39,18 @@ chmod +x "$INSTALL_DIR/kiosk/launch_kiosk.sh"
 chmod +x "$INSTALL_DIR/kiosk/setup_screen.sh"
 chmod +x "$INSTALL_DIR/kiosk/auto_update.sh"
 chmod +x "$INSTALL_DIR/kiosk/exit_kiosk.sh"
+
+# Record version metadata
+cat << EOF > "$INSTALL_DIR/version.json"
+{
+  "version": "$VERSION",
+  "commit": "$COMMIT",
+  "name": "Sonos Touchscreen Controller",
+  "deployment": "Raspberry Pi Kiosk",
+  "target": "Raspberry Pi 7\" Touchscreen (800x480)",
+  "installed_at": "$(date '+%Y-%m-%d %H:%M:%S')"
+}
+EOF
 
 # Save repository location for auto-updater
 REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null || echo "$SCRIPT_DIR/..")"
@@ -84,6 +99,7 @@ echo ""
 echo "=========================================================="
 echo " [+] Sonos Touchscreen Controller successfully installed! "
 echo "=========================================================="
+echo " • Controller:     v$VERSION ($COMMIT)"
 echo " • Kiosk Launcher: $HOME/.local/bin/sonos-touchscreen"
 echo " • Desktop Entry:  $DESKTOP_FILE"
 echo " • Kiosk Service:  sonos-touchscreen.service (Active)"

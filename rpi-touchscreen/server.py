@@ -28,6 +28,44 @@ def get_local_ip():
     except Exception:
         return '127.0.0.1'
 
+def get_version_info():
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    install_dir = os.path.expanduser("~/.local/share/sonos-touchscreen")
+    v_data = {
+        "version": "1.2.0",
+        "name": "Sonos Touchscreen Controller",
+        "deployment": "Raspberry Pi Kiosk",
+        "target": "Raspberry Pi 7\" Touchscreen (800x480)",
+        "commit": "",
+        "branch": "main"
+    }
+    for d in [base_dir, install_dir]:
+        v_file = os.path.join(d, "version.json")
+        if os.path.exists(v_file):
+            try:
+                with open(v_file, "r") as f:
+                    v_data.update(json.load(f))
+                    break
+            except Exception:
+                pass
+
+    for d in [base_dir, install_dir]:
+        if os.path.exists(os.path.join(d, ".git")):
+            try:
+                import subprocess
+                cmd = ["git", "-C", d, "rev-parse", "--short", "HEAD"]
+                commit = subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode().strip()
+                if commit:
+                    v_data["commit"] = commit
+                b_cmd = ["git", "-C", d, "rev-parse", "--abbrev-ref", "HEAD"]
+                branch = subprocess.check_output(b_cmd, stderr=subprocess.DEVNULL).decode().strip()
+                if branch and branch != "HEAD":
+                    v_data["branch"] = branch
+                break
+            except Exception:
+                pass
+    return v_data
+
 LOCAL_IP = get_local_ip()
 
 class TouchscreenHandler(SimpleHTTPRequestHandler):
@@ -51,8 +89,12 @@ class TouchscreenHandler(SimpleHTTPRequestHandler):
             elif path == "/app.js":
                 self.serve_file(os.path.join(STATIC_DIR, "app.js"), "application/javascript; charset=utf-8")
                 return
+            elif path == "/api/version":
+                self.send_json(get_version_info())
+                return
             elif path in ("/api/status", "/api/state"):
                 st = self.server.controller.get_state()
+                st["version"] = get_version_info().get("version", "1.2.0")
                 self.send_json(st)
                 return
             elif path == "/api/speakers":
