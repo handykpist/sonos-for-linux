@@ -108,7 +108,7 @@ cd sonos-rpi-touchscreen
 
 # 2. Run the automated installer
 chmod +x install.sh
-./install.sh
+bash install.sh
 ```
 
 The installer will:
@@ -122,11 +122,11 @@ The installer will:
 If you already have `sonos-rpi-touchscreen` cloned and running on your Raspberry Pi:
 
 ```bash
-cd ~/sonos-rpi-touchscreen
+cd ~/sonos-rpi-touchscreen    # (or your cloned repository directory)
 git pull
-./install.sh
+bash install.sh
 ```
-*(Running `./install.sh` refreshes all application files and ensures all systemd services and timers are active).*
+*(Running `bash install.sh` refreshes all application files and restarts the `sonos-touchscreen` user service).*
 
 ---
 

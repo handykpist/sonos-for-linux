@@ -106,15 +106,32 @@ class TouchscreenHandler(SimpleHTTPRequestHandler):
                 return
             elif path == "/api/update/status":
                 base_dir = os.path.dirname(os.path.abspath(__file__))
-                log_file = os.path.join(base_dir, "update.log")
+                install_dir = os.path.expanduser("~/.local/share/sonos-touchscreen")
+
+                status_data = {"status": "idle", "message": "No update running."}
+                for d in [install_dir, base_dir]:
+                    sf = os.path.join(d, "update_status.json")
+                    if os.path.exists(sf):
+                        try:
+                            with open(sf, "r") as f:
+                                status_data = json.load(f)
+                                break
+                        except Exception:
+                            pass
+
                 recent_log = []
-                if os.path.exists(log_file):
-                    try:
-                        with open(log_file, "r") as f:
-                            recent_log = [line.strip() for line in f.readlines()[-15:] if line.strip()]
-                    except Exception:
-                        pass
-                self.send_json({"log": recent_log})
+                for d in [install_dir, base_dir]:
+                    lf = os.path.join(d, "update.log")
+                    if os.path.exists(lf):
+                        try:
+                            with open(lf, "r") as f:
+                                recent_log = [line.strip() for line in f.readlines()[-10:] if line.strip()]
+                                break
+                        except Exception:
+                            pass
+
+                status_data["log"] = recent_log
+                self.send_json(status_data)
                 return
 
             super().do_GET()
@@ -257,9 +274,24 @@ class TouchscreenHandler(SimpleHTTPRequestHandler):
                 self.send_json({"success": success})
                 return
             elif path == "/api/update/trigger":
-                import subprocess
+                import subprocess, time
                 base_dir = os.path.dirname(os.path.abspath(__file__))
+                install_dir = os.path.expanduser("~/.local/share/sonos-touchscreen")
+
+                # Initialize update status for immediate frontend feedback
+                init_status = {"status": "checking", "message": "Starting update check...", "timestamp": time.time()}
+                for d in [install_dir, base_dir]:
+                    if os.path.exists(d):
+                        try:
+                            with open(os.path.join(d, "update_status.json"), "w") as f:
+                                json.dump(init_status, f)
+                        except Exception:
+                            pass
+
                 script_path = os.path.join(base_dir, "kiosk", "auto_update.sh")
+                if not os.path.exists(script_path):
+                    script_path = os.path.join(install_dir, "kiosk", "auto_update.sh")
+
                 if os.path.exists(script_path):
                     subprocess.Popen(["bash", script_path, "--force"])
                     self.send_json({"success": True, "message": "Auto-update triggered in background"})

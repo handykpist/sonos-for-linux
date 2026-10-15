@@ -9,11 +9,13 @@ echo "=========================================================="
 echo "      Sonos Touchscreen Controller - Raspberry Pi Setup   "
 echo "=========================================================="
 
-# 1. Install system prerequisites
+# 1. Install system prerequisites (if missing)
 echo "[*] Checking system packages..."
-if command -v apt-get >/dev/null 2>&1; then
-    sudo apt-get update -y
-    sudo apt-get install -y python3 chromium-browser unclutter
+if ! command -v chromium-browser >/dev/null 2>&1 && ! command -v chromium >/dev/null 2>&1; then
+    if command -v apt-get >/dev/null 2>&1; then
+        echo "[*] Installing Chromium and prerequisites..."
+        sudo apt-get update -y && sudo apt-get install -y python3 chromium-browser unclutter
+    fi
 fi
 
 # Disable Raspberry Pi OS screen blanking (prevents official 7" DSI display from turning white on idle)
@@ -29,6 +31,7 @@ cp -r "$SCRIPT_DIR/sonos_device.py" "$INSTALL_DIR/"
 cp -r "$SCRIPT_DIR/lyrics.py" "$INSTALL_DIR/"
 cp -r "$SCRIPT_DIR/static" "$INSTALL_DIR/"
 cp -r "$SCRIPT_DIR/kiosk" "$INSTALL_DIR/"
+cp -r "$SCRIPT_DIR/speakers_cache.json" "$INSTALL_DIR/" 2>/dev/null || true
 chmod +x "$INSTALL_DIR/kiosk/launch_kiosk.sh"
 chmod +x "$INSTALL_DIR/kiosk/setup_screen.sh"
 chmod +x "$INSTALL_DIR/kiosk/auto_update.sh"

@@ -922,17 +922,55 @@ nightDimmer.addEventListener("click", () => {
 // 11. Hidden Bottom-Left Corner Power & Exit Button
 const btnHiddenPower = document.getElementById("btn-hidden-power");
 const powerModal = document.getElementById("power-modal");
-const btnClosePowerModal = document.getElementById("btn-close-power-modal");
 
-if (btnHiddenPower) {
-    btnHiddenPower.addEventListener("click", () => {
-        if (powerModal) powerModal.classList.add("open");
+let defaultPowerModalHtml = "";
+
+function bindPowerModalButtons() {
+    if (!powerModal) return;
+
+    document.getElementById("btn-close-power-modal")?.addEventListener("click", () => {
+        powerModal.classList.remove("open");
+    });
+
+    document.getElementById("btn-power-exit")?.addEventListener("click", () => {
+        handleSystemAction("/api/system/exit", null, "🚪", "Exiting to Desktop...", "Closing kiosk window and stopping controller.");
+    });
+
+    document.getElementById("btn-power-restart")?.addEventListener("click", () => {
+        handleSystemAction("/api/system/restart", null, "🔄", "Restarting Sonos App...", "Reloading UI and UPnP services.");
+    });
+
+    document.getElementById("btn-power-reboot")?.addEventListener("click", () => {
+        handleSystemAction("/api/system/reboot", "Reboot the Raspberry Pi?", "⚡", "Rebooting Raspberry Pi...", "System is restarting.");
+    });
+
+    document.getElementById("btn-power-shutdown")?.addEventListener("click", () => {
+        handleSystemAction("/api/system/shutdown", "Safely shut down the Raspberry Pi?", "🛑", "Shutting Down...", "Safe to unplug power when screen turns off.");
+    });
+
+    document.getElementById("btn-power-update")?.addEventListener("click", () => {
+        triggerTouchscreenUpdate();
     });
 }
 
-if (btnClosePowerModal) {
-    btnClosePowerModal.addEventListener("click", () => {
-        if (powerModal) powerModal.classList.remove("open");
+if (powerModal) {
+    const modalCard = powerModal.querySelector(".modal-card");
+    if (modalCard) {
+        defaultPowerModalHtml = modalCard.innerHTML;
+    }
+    bindPowerModalButtons();
+}
+
+if (btnHiddenPower) {
+    btnHiddenPower.addEventListener("click", () => {
+        if (powerModal) {
+            const modalCard = powerModal.querySelector(".modal-card");
+            if (modalCard && defaultPowerModalHtml) {
+                modalCard.innerHTML = defaultPowerModalHtml;
+                bindPowerModalButtons();
+            }
+            powerModal.classList.add("open");
+        }
     });
 }
 
@@ -945,8 +983,15 @@ function handleSystemAction(endpoint, confirmMsg, actionIcon, actionTitle, actio
                 <div style="font-size:42px; margin-bottom:14px;">${actionIcon || "⏳"}</div>
                 <h2 style="font-size:22px; font-weight:700;">${actionTitle || "Executing command..."}</h2>
                 <p style="color:rgba(255,255,255,0.6); margin-top:8px; font-size:14px;">${actionSub || "Please wait while the system responds."}</p>
+                <div style="margin-top:24px;">
+                    <button id="btn-power-cancel-action" style="padding:10px 22px; border-radius:12px; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); color:#fff; font-size:13px; font-weight:700; cursor:pointer;">✕ Dismiss</button>
+                </div>
             </div>
         `;
+        document.getElementById("btn-power-cancel-action")?.addEventListener("click", () => {
+            powerModal.classList.remove("open");
+            location.reload();
+        });
     }
 
     fetch(endpoint, { method: "POST" })
@@ -961,25 +1006,110 @@ function handleSystemAction(endpoint, confirmMsg, actionIcon, actionTitle, actio
         .catch(err => console.error("System action error:", err));
 }
 
-document.getElementById("btn-power-exit")?.addEventListener("click", () => {
-    handleSystemAction("/api/system/exit", null, "🚪", "Exiting to Desktop...", "Closing kiosk window and stopping controller.");
-});
+function triggerTouchscreenUpdate() {
+    if (!powerModal) return;
+    const modalCard = powerModal.querySelector(".modal-card");
+    if (!modalCard) return;
 
-document.getElementById("btn-power-restart")?.addEventListener("click", () => {
-    handleSystemAction("/api/system/restart", null, "🔄", "Restarting Sonos App...", "Reloading UI and UPnP services.");
-});
+    modalCard.innerHTML = `
+        <div style="text-align:center; padding:28px 14px;">
+            <div id="update-modal-icon" style="font-size:42px; margin-bottom:12px;">📥</div>
+            <h2 id="update-modal-title" style="font-size:20px; font-weight:800; color:#fff;">Updating Sonos Touchscreen...</h2>
+            <p id="update-modal-sub" style="color:rgba(255,255,255,0.7); margin-top:8px; font-size:13px; line-height:1.4;">Connecting to remote Git repository...</p>
+            <div id="update-modal-progress" style="margin-top:16px; font-size:13px; color:var(--accent); font-family:monospace; min-height:20px;">Checking network & remote...</div>
+            <div style="margin-top:22px;">
+                <button id="btn-close-update-modal" style="padding:10px 24px; border-radius:12px; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); color:#fff; font-size:13px; font-weight:700; cursor:pointer;">✕ Dismiss</button>
+            </div>
+        </div>
+    `;
 
-document.getElementById("btn-power-reboot")?.addEventListener("click", () => {
-    handleSystemAction("/api/system/reboot", "Reboot the Raspberry Pi?", "⚡", "Rebooting Raspberry Pi...", "System is restarting.");
-});
+    const iconEl = document.getElementById("update-modal-icon");
+    const titleEl = document.getElementById("update-modal-title");
+    const subEl = document.getElementById("update-modal-sub");
+    const progEl = document.getElementById("update-modal-progress");
+    const closeBtn = document.getElementById("btn-close-update-modal");
 
-document.getElementById("btn-power-shutdown")?.addEventListener("click", () => {
-    handleSystemAction("/api/system/shutdown", "Safely shut down the Raspberry Pi?", "🛑", "Shutting Down...", "Safe to unplug power when screen turns off.");
-});
+    let pollInterval = null;
+    let pollCount = 0;
 
-document.getElementById("btn-power-update")?.addEventListener("click", () => {
-    handleSystemAction("/api/update/trigger", "Check for and apply updates from your Git repository now?", "📥", "Updating Sonos Touchscreen...", "Checking remote Git repository, pulling updates, and restarting the controller.");
-});
+    const restoreModal = () => {
+        if (pollInterval) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+        }
+        if (defaultPowerModalHtml) {
+            modalCard.innerHTML = defaultPowerModalHtml;
+            bindPowerModalButtons();
+        }
+        powerModal.classList.remove("open");
+    };
+
+    closeBtn?.addEventListener("click", restoreModal);
+
+    fetch("/api/update/trigger", { method: "POST" })
+        .catch(err => {
+            if (iconEl) iconEl.textContent = "⚠️";
+            if (titleEl) titleEl.textContent = "Trigger Failed";
+            if (subEl) subEl.textContent = "Could not start update script. Check server logs.";
+        });
+
+    pollInterval = setInterval(async () => {
+        pollCount++;
+        try {
+            const res = await fetch("/api/update/status");
+            if (!res.ok) throw new Error("HTTP error");
+            const data = await res.json();
+            const status = data.status;
+            const message = data.message || "";
+
+            if (progEl && message) progEl.textContent = message;
+
+            if (status === "uptodate") {
+                if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+                if (iconEl) iconEl.textContent = "✅";
+                if (titleEl) titleEl.textContent = "Already Up to Date";
+                if (subEl) subEl.textContent = "Your Sonos Touchscreen is running the latest version.";
+                if (closeBtn) {
+                    closeBtn.textContent = "✓ Done";
+                    closeBtn.style.background = "var(--accent)";
+                    closeBtn.style.color = "#000";
+                }
+                setTimeout(restoreModal, 3200);
+            } else if (status === "error") {
+                if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+                if (iconEl) iconEl.textContent = "⚠️";
+                if (titleEl) titleEl.textContent = "Update Could Not Complete";
+                if (subEl) subEl.textContent = message || "Git could not reach remote repository.";
+                if (closeBtn) closeBtn.textContent = "✕ Close";
+            } else if (status === "restarting" || status === "done") {
+                if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+                if (iconEl) iconEl.textContent = "🔄";
+                if (titleEl) titleEl.textContent = "Restarting Controller...";
+                if (subEl) subEl.textContent = "Updates applied! Reloading in 5 seconds...";
+                if (closeBtn) closeBtn.style.display = "none";
+                setTimeout(() => {
+                    location.reload();
+                }, 5000);
+            } else if (status === "updating" || status === "deploying") {
+                if (iconEl) iconEl.textContent = "📥";
+                if (titleEl) titleEl.textContent = "Applying Updates...";
+                if (subEl) subEl.textContent = "Pulling newest code and updating files...";
+            }
+        } catch (e) {
+            if (pollCount > 3) {
+                if (progEl) progEl.textContent = "Restarting backend...";
+            }
+        }
+
+        if (pollCount > 25) {
+            if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+            if (iconEl) iconEl.textContent = "⏱️";
+            if (titleEl) titleEl.textContent = "Update Timed Out";
+            if (subEl) subEl.textContent = "Update check took too long. Check network or run via terminal.";
+            if (closeBtn) closeBtn.textContent = "✕ Close";
+        }
+    }, 1000);
+}
 
 // 12. Music Search Drawer & Touch Virtual Keyboard
 const searchDrawer = document.getElementById("search-drawer");
