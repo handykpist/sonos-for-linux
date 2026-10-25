@@ -1,6 +1,6 @@
-# Official Sonos S1 Controller for Linux
+# Unofficial Sonos S1 Controller for Linux
 
-Run the official Windows **Sonos S1 Desktop Controller** (`Sonos_57.23-74170.exe`) natively on Linux Mint / Ubuntu with 100% feature parity to Windows:
+Run the official Windows **Sonos S1 Desktop Controller** (`Sonos_57.23-74170.exe`) natively on Linux with 100% feature parity to Windows:
 - Full Sonos Account login and synchronization
 - Spotify integration, personal playlists, and Spotify search
 - Sveriges Radio, TuneIn, and Sonos Radio
